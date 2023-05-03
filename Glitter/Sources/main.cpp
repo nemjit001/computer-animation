@@ -1,5 +1,6 @@
 // Local Headers
 #include "glitter.hpp"
+#include "Application.hpp"
 
 // System Headers
 #include <glad/glad.h>
@@ -17,8 +18,8 @@ int main(int argc, char * argv[]) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    auto mWindow = glfwCreateWindow(mWidth, mHeight, "OpenGL", nullptr, nullptr);
+    glfwWindowHint(GLFW_RESIZABLE, GL_TRUE);
+    auto mWindow = glfwCreateWindow(mWidth, mHeight, mAppName, nullptr, nullptr);
 
     // Check for Valid Context
     if (mWindow == nullptr) {
@@ -31,10 +32,15 @@ int main(int argc, char * argv[]) {
     gladLoadGL();
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
+    // Initialize our application and call its init function
+    Application app = Application();
+    app.init();
+
     // Rendering Loop
-    while (glfwWindowShouldClose(mWindow) == false) {
-        if (glfwGetKey(mWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(mWindow, true);
+    while (glfwWindowShouldClose(mWindow) == false)
+    {
+        // Tick the application state before the graphics update
+        app.tick();
 
         // Background Fill Color
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
@@ -43,6 +49,11 @@ int main(int argc, char * argv[]) {
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
-    }   glfwTerminate();
+    }
+    
+    // Teardown application and GLFW
+    app.shutdown();
+    glfwTerminate();
+
     return EXIT_SUCCESS;
 }
