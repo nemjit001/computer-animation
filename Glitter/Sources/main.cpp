@@ -1,6 +1,7 @@
 // Local Headers
 #include "glitter.hpp"
 #include "Shader.hpp"
+#include "ShaderProgram.hpp"
 #include "Application.hpp"
 
 // System Headers
@@ -40,6 +41,13 @@ int main(int argc, char * argv[])
     vertShader.init();
     fragShader.init();
 
+    // create and link shader program using our vert & frag shaders
+    ShaderProgram shaderProgram = ShaderProgram();
+    shaderProgram.init();
+    shaderProgram.registerShader(vertShader);
+    shaderProgram.registerShader(fragShader);
+    shaderProgram.use();
+
     // Initialize our application and call its init function
     Application app = Application();
     app.init();
@@ -62,6 +70,7 @@ int main(int argc, char * argv[])
     // Teardown application and GLFW
     app.shutdown();
 
+    shaderProgram.cleanup();
     vertShader.cleanup();
     fragShader.cleanup();
     glfwTerminate();
