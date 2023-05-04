@@ -2,13 +2,11 @@
 
 #include <iostream>
 
-Shader::Shader(const char* filepath, GLenum shaderType)
+Shader::Shader()
     :
-    m_shaderId(0),
-    m_shaderType(shaderType),
-    p_filepath(filepath)
+    m_programId(0)
 {
-    
+    //
 }
 
 Shader::~Shader()
@@ -18,30 +16,17 @@ Shader::~Shader()
 
 void Shader::init()
 {
-    m_shaderId = glCreateShader(m_shaderType);
-    loadShaderFile(p_filepath);
-
-    int success = 0;
-    glGetShaderiv(m_shaderId, GL_COMPILE_STATUS, &success);
-
-    if (success = GL_FALSE)
-    {
-        throw std::runtime_error("Failed to compile shader!");
-    }
+    m_programId = glCreateProgram();
 }
 
 void Shader::cleanup()
 {
-    glDeleteShader(m_shaderId);
+    glDeleteProgram(m_programId);
 }
 
-GLuint Shader::getId()
+Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
 {
-    return m_shaderId;
-}
-
-void Shader::loadShaderFile(const char* filepath)
-{
+    GLuint shaderId = glCreateShader(shaderType);
     FILE* pFile = fopen(filepath, "r");
 
     if (!pFile)
@@ -51,12 +36,45 @@ void Shader::loadShaderFile(const char* filepath)
     size_t fileSize = ftell(pFile);
     rewind(pFile);
 
-    char* pShaderCode = new char[fileSize]{};
+    char* pShaderCode = new char[fileSize + 1] {};
     fread(pShaderCode, sizeof(char), fileSize, pFile);
     fclose(pFile);
-    
-    glShaderSource(m_shaderId, 1, (const char**)&pShaderCode, NULL);
-    glCompileShader(m_shaderId);
+
+    glShaderSource(shaderId, 1, (const char**)&pShaderCode, NULL);
+    glCompileShader(shaderId);
     delete[] pShaderCode;
+
+    int success = 0;
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+    if (success == GL_FALSE)
+    {
+        throw std::runtime_error("Failed to compile shader!");
+    }
+
+    glAttachShader(m_programId, shaderId);
+    glDeleteShader(shaderId);
+
+    return *this;
 }
 
+Shader& Shader::link()
+{
+    int success = 0;
+
+    glLinkProgram(m_programId);
+    glGetProgramiv(m_programId, GL_LINK_STATUS, &success);
+
+    if (success == GL_FALSE)
+    {
+        throw std::runtime_error("Failed to link shader program!");
+    }
+
+    return *this;
+}
+
+Shader& Shader::use()
+{
+    glUseProgram(m_programId);
+
+    return *this;
+}
