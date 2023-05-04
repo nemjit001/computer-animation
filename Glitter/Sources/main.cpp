@@ -1,5 +1,6 @@
 // Local Headers
 #include "glitter.hpp"
+#include "Shader.hpp"
 #include "Application.hpp"
 
 // System Headers
@@ -10,8 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 
-int main(int argc, char * argv[]) {
-
+int main(int argc, char * argv[])
+{
     // Load GLFW and Create a Window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -31,6 +32,13 @@ int main(int argc, char * argv[]) {
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
     fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+
+    // initialize shaders
+    Shader vertShader = Shader("./Glitter/shader.vert", GL_VERTEX_SHADER);
+    Shader fragShader = Shader("./Glitter/shader.frag", GL_FRAGMENT_SHADER);
+
+    vertShader.init();
+    fragShader.init();
 
     // Initialize our application and call its init function
     Application app = Application();
@@ -53,6 +61,9 @@ int main(int argc, char * argv[]) {
     
     // Teardown application and GLFW
     app.shutdown();
+
+    vertShader.cleanup();
+    fragShader.cleanup();
     glfwTerminate();
 
     return EXIT_SUCCESS;
