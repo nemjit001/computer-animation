@@ -48,6 +48,9 @@ Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
     if (success == GL_FALSE)
     {
+        char infoLog[512];
+        glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
+        std::cout << "Error in compilation of shader. Info log:\n" << infoLog << std::endl;
         throw std::runtime_error("Failed to compile shader!");
     }
 
