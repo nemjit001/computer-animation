@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "Mesh.hpp"
+
 int main(int argc, char * argv[])
 {
     // Load GLFW and Create a Window
@@ -48,6 +50,8 @@ int main(int argc, char * argv[])
     Application app = Application();
     app.init();
 
+    Mesh exampleMesh;
+
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
     {
@@ -57,6 +61,10 @@ int main(int argc, char * argv[])
         // Background Fill Color
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        defaultShader.use();
+
+        exampleMesh.Render();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
