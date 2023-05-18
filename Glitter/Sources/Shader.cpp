@@ -24,6 +24,10 @@ void Shader::cleanup()
     glDeleteProgram(m_programId);
 }
 
+unsigned int Shader::getUniformLocation(std::string uniformName) {
+    return glGetUniformLocation(m_programId, uniformName.c_str());
+}
+
 Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
 {
     GLuint shaderId = glCreateShader(shaderType);

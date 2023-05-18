@@ -3,6 +3,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <string>
 
 /// <summary>
 /// The Shader class can be used to register shader files for rendering,
@@ -29,6 +30,8 @@ public:
     /// Clean up all memory associated with the openGL shader program
     /// </summary>
     void cleanup();
+
+    unsigned int getUniformLocation(std::string uniformName);
 
     /// <summary>
     /// Register a shader file and associated shader type to the shader program

@@ -62,8 +62,20 @@ int main(int argc, char * argv[])
         glClearColor(0.25f, 0.25f, 0.25f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+
         defaultShader.use();
 
+        // Send the projection matrix to OpenGL:
+        glm::mat4x4 projectionMatrix = app.camera.GetCurrentProjectionMatrix();
+        unsigned int projectionMatrixLocation = defaultShader.getUniformLocation("projectionMatrix");
+        glUniformMatrix4fv(
+            projectionMatrixLocation,   // uniform location
+            1,                          // One single matrix
+            GL_FALSE,                   // Don't transpose
+            &projectionMatrix[0][0]     // Get a pointer to the 1st element
+        );
+
+        // Render our mesh:
         exampleMesh.Render();
 
         // Flip Buffers and Draw
