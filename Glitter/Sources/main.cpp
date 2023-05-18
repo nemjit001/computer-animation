@@ -38,8 +38,8 @@ int main(int argc, char * argv[])
     defaultShader.init();
 
     defaultShader
-        .registerShader("./shader.vert", GL_VERTEX_SHADER)
-        .registerShader("./shader.frag", GL_FRAGMENT_SHADER)
+        .registerShader("Shaders/shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
     defaultShader.use();
