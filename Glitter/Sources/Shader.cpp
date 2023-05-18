@@ -1,6 +1,9 @@
 #include "Shader.hpp"
 
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 Shader::Shader()
     :
@@ -77,4 +80,61 @@ Shader& Shader::use()
     glUseProgram(m_programId);
 
     return *this;
+}
+
+GLuint Shader::getShaderID()
+{
+    return m_programId;
+}
+
+void Shader::setInt(const std::string& name, int value) const
+{
+	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+
+	if (uniform_location == -1)
+	{
+		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+		return;
+	}
+
+	glUniform1i(uniform_location, value);
+}
+
+void Shader::setFloat(const std::string& name, float value) const
+{
+	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+
+	if (uniform_location == -1)
+	{
+		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+		return;
+	}
+
+	glUniform1f(uniform_location, value);
+}
+
+void Shader::setMat4(const std::string& name, const glm::mat4 mat) const
+{
+	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+
+	if (uniform_location == -1)
+	{
+		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+		return;
+	}
+
+	glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(mat));
+}
+
+void Shader::setVec3(const std::string& name, const glm::vec3 vec) const
+{
+	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+
+	if (uniform_location == -1)
+	{
+		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+		return;
+	}
+
+	glUniform3fv(uniform_location, 1, glm::value_ptr(vec));
 }

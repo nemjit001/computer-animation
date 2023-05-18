@@ -54,4 +54,6 @@ void Mesh::Render() {
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
 
     glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
+
+    glBindVertexArray(0);
 }
