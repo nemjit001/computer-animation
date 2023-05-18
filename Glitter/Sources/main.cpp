@@ -11,6 +11,8 @@
 #include <cstdio>
 #include <cstdlib>
 
+#include "Mesh.hpp"
+
 int main(int argc, char * argv[])
 {
     // Load GLFW and Create a Window
@@ -48,24 +50,7 @@ int main(int argc, char * argv[])
     Application app = Application();
     app.init();
 
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
-    };
-
-    unsigned int VertexArrayObject;
-    unsigned int VertexBufferObject;
-
-    glGenVertexArrays(1, &VertexArrayObject);
-    glBindVertexArray(VertexArrayObject);
-
-    glGenBuffers(1, &VertexBufferObject);
-    glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    Mesh exampleMesh;
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -79,11 +64,9 @@ int main(int argc, char * argv[])
 
         defaultShader.use();
 
-        glBindVertexArray(VertexArrayObject);
-        glBindBuffer(GL_ARRAY_BUFFER, VertexBufferObject);
+        exampleMesh.Render();
 
         // Flip Buffers and Draw
-        glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
