@@ -1,7 +1,11 @@
 #pragma once
 #include "Vertex.hpp"
 #include "Face.hpp"
+
 #include <vector>
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
 
 class Mesh 
 {
@@ -12,8 +16,8 @@ public:
 
 	// constructors
 	Mesh();
-	Mesh(std::string const & filename);
-	Mesh(std::vector<Vertex> verts, std::vector<Face> faces);
+	Mesh(std::string const& filename);
+	~Mesh();
 	void Render();
 
 private:

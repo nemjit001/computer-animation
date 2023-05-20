@@ -40,8 +40,8 @@ int main(int argc, char * argv[])
     defaultShader.init();
 
     defaultShader
-        .registerShader("Shaders/shader.vert", GL_VERTEX_SHADER)
-        .registerShader("Shaders/shader.frag", GL_FRAGMENT_SHADER)
+        .registerShader("shader.vert", GL_VERTEX_SHADER)
+        .registerShader("shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
     defaultShader.use();
@@ -50,7 +50,7 @@ int main(int argc, char * argv[])
     Application app = Application();
     app.init();
 
-    Mesh exampleMesh;
+    Mesh* exampleMesh = new Mesh("cube.obj");
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -76,12 +76,14 @@ int main(int argc, char * argv[])
         );
 
         // Render our mesh:
-        exampleMesh.Render();
+        exampleMesh->Render();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
+
+    delete exampleMesh;
     
     // Teardown application and GLFW
     app.shutdown();
