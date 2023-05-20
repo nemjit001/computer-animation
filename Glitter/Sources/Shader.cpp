@@ -27,10 +27,6 @@ void Shader::cleanup()
     glDeleteProgram(m_programId);
 }
 
-unsigned int Shader::getUniformLocation(std::string uniformName) {
-    return glGetUniformLocation(m_programId, uniformName.c_str());
-}
-
 Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
 {
     GLuint shaderId = glCreateShader(shaderType);
@@ -43,7 +39,7 @@ Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
     size_t fileSize = ftell(pFile);
     rewind(pFile);
 
-    char* pShaderCode = new char[fileSize + 1] {};
+    char* pShaderCode = new char[fileSize + 1]{};
     fread(pShaderCode, sizeof(char), fileSize, pFile);
     fclose(pFile);
 
@@ -55,9 +51,6 @@ Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
     glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
     if (success == GL_FALSE)
     {
-        char infoLog[512];
-        glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
-        std::cout << "Error in compilation of shader. Info log:\n" << infoLog << std::endl;
         throw std::runtime_error("Failed to compile shader!");
     }
 
@@ -96,52 +89,52 @@ GLuint Shader::getShaderID()
 
 void Shader::setInt(const std::string& name, int value) const
 {
-	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+    int uniform_location = glGetUniformLocation(m_programId, name.c_str());
 
-	if (uniform_location == -1)
-	{
-		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
-		return;
-	}
+    if (uniform_location == -1)
+    {
+        std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+        return;
+    }
 
-	glUniform1i(uniform_location, value);
+    glUniform1i(uniform_location, value);
 }
 
 void Shader::setFloat(const std::string& name, float value) const
 {
-	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+    int uniform_location = glGetUniformLocation(m_programId, name.c_str());
 
-	if (uniform_location == -1)
-	{
-		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
-		return;
-	}
+    if (uniform_location == -1)
+    {
+        std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+        return;
+    }
 
-	glUniform1f(uniform_location, value);
+    glUniform1f(uniform_location, value);
 }
 
 void Shader::setMat4(const std::string& name, const glm::mat4 mat) const
 {
-	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+    int uniform_location = glGetUniformLocation(m_programId, name.c_str());
 
-	if (uniform_location == -1)
-	{
-		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
-		return;
-	}
+    if (uniform_location == -1)
+    {
+        std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+        return;
+    }
 
-	glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(mat));
+    glUniformMatrix4fv(uniform_location, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 void Shader::setVec3(const std::string& name, const glm::vec3 vec) const
 {
-	int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+    int uniform_location = glGetUniformLocation(m_programId, name.c_str());
 
-	if (uniform_location == -1)
-	{
-		std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
-		return;
-	}
+    if (uniform_location == -1)
+    {
+        std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+        return;
+    }
 
-	glUniform3fv(uniform_location, 1, glm::value_ptr(vec));
+    glUniform3fv(uniform_location, 1, glm::value_ptr(vec));
 }

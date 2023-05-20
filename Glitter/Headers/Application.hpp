@@ -10,7 +10,7 @@ public:
     void init();
     void tick();
     void shutdown();
-    Camera camera;
+
 };
 
 #endif // APPLICATION_H
