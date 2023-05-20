@@ -35,8 +35,46 @@ Mesh::Mesh(std::string const& filename)
     }
     else
     {
-        // parse scene
+        parse(scene->mRootNode, scene);
     }
+}
+
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices)
+    :
+    m_vertices(verts),
+    m_indices(indices)
+{
+    // bind the default vertex array object
+    glGenBuffers(1, &m_VertexArrayObject);
+    glBindVertexArray(m_VertexArrayObject);
+    
+    // bind & create the vertex buffer
+    glGenBuffers(1, &m_VertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        verts.size() * sizeof(Vertex),
+        verts.data(),
+        GL_STATIC_DRAW
+    );
+
+    // bind & create the index buffer
+    glGenBuffers(1, &m_IndexBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBufferObject);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        indices.size() * sizeof(unsigned int),
+        indices.data(),
+        GL_STATIC_DRAW
+    );
+
+    // Set Shader Attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, position));
+    glEnableVertexAttribArray(0); // Vertex Positions
+
+    glBindVertexArray(0);
+    glDeleteBuffers(1, &m_VertexBufferObject);
+    glDeleteBuffers(1, &m_IndexBufferObject);
 }
 
 Mesh::~Mesh()
@@ -46,5 +84,40 @@ Mesh::~Mesh()
 
 void Mesh::Render()
 {
-    //
+    for (auto& mesh : m_subMeshes)
+        mesh->Render();
+
+    glBindVertexArray(m_VertexArrayObject);
+    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Mesh::parse(const aiNode* node, const aiScene* scene)
+{
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+        parse(scene->mMeshes[node->mMeshes[i]], scene);
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+        parse(node->mChildren[i], scene);
+}
+
+void Mesh::parse(const aiMesh* mesh, const aiScene* scene)
+{
+    std::vector<Vertex> vertices;
+    Vertex vert;
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+        vert = {};
+        vert.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        vert.normal   = glm::vec3(mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z);
+        vertices.push_back(vert);
+    }
+
+    std::vector<unsigned int> indices;
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+        for (unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
+            indices.push_back(mesh->mFaces[i].mIndices[j]);
+
+    m_subMeshes.push_back(
+        std::unique_ptr<Mesh>(new Mesh(vertices, indices))
+    );
 }
