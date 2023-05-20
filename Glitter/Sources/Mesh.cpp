@@ -1,4 +1,3 @@
-#pragma once
 #include <iostream>
 #include <glad/glad.h>
 #include "Mesh.hpp"
@@ -9,7 +8,7 @@ Mesh::Mesh() {
     float vertices[] = {
         -0.5f, -0.5f, 0.0f,
          0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
+         0.0f,  0.5f, 0.0f,
     };
 
     // Enter the hardcoded triangle position coordinates into the vector of vertices.
