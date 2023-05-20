@@ -1,59 +1,123 @@
-#pragma once
+#include "Mesh.hpp"
+
 #include <iostream>
 #include <glad/glad.h>
-#include "Mesh.hpp"
 #include <glm/glm.hpp>
 
-Mesh::Mesh() {
-    // Hardcoded triangle vertices:
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
-    };
+#define STB_IMAGE_IMPLEMENTATION
 
-    // Enter the hardcoded triangle position coordinates into the vector of vertices.
-    m_vertices = std::vector<Vertex>();
-    for (int i = 0; i < 3; i++) {
-        Vertex nextVertex;
-        nextVertex.position = glm::vec3(vertices[i * 3], vertices[i * 3 + 1], vertices[i * 3 + 2]);
-        m_vertices.push_back(nextVertex);
-    }
+// System Headers
+#include <stb_image.h>
 
-    // The Mesh class and its properties have been set up. Next we need to execute some OpenGL code.
-
-    // Request a buffer from OpenGL - a place on the GPU to store our vertices.
-	glGenBuffers(1, &m_VertexBufferObject);
-
-    // Bind our buffer into the GL_ARRAY_BUFFER slot.
-	glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
-
-    // Figure out the total size of the vertex data in bytes:
-    unsigned int verticesTotalBytes = sizeof(m_vertices[0]) * m_vertices.size();
-    
-    // Send all the vertex data to OpenGL. Our buffer is bound to the GL_ARRAY_BUFFER slot so we can send the data using that information
-    glBufferData(GL_ARRAY_BUFFER, verticesTotalBytes, m_vertices.data(), GL_STATIC_DRAW);
-    
-    // Request a Vertex Array Object from OpenGL - A vertex array stores information about how vertex data should be interpreted.
+Mesh::Mesh()
+    :
+    m_VertexBufferObject(0),
+    m_VertexArrayObject(0)
+{
     glGenVertexArrays(1, &m_VertexArrayObject);
+}
+
+Mesh::Mesh(std::string const& filename)
+    :
+    Mesh()
+{
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(
+        filename,
+        aiProcessPreset_TargetRealtime_MaxQuality |
+        aiProcess_OptimizeGraph                   |
+        aiProcess_FlipUVs
+    );
+
+    if (!scene)
+    {
+        throw std::runtime_error(importer.GetErrorString());
+    }
+    else
+    {
+        parse(scene->mRootNode, scene);
+    }
+}
+
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices)
+    :
+    m_vertices(verts),
+    m_indices(indices)
+{
+    // bind the default vertex array object
+    glGenBuffers(1, &m_VertexArrayObject);
     glBindVertexArray(m_VertexArrayObject);
-
-    unsigned int positionDimensions = 3;
-    unsigned int stride = sizeof(m_vertices[0]);
-
-    // Let OpenGL know how our vertex data should be interpreted:
     
-    // The positional vertex data is contained in the first three (3D) floats of every vertex:
-    glVertexAttribPointer(0, positionDimensions, GL_FLOAT, GL_FALSE, stride, (void*)0);
-    glEnableVertexAttribArray(0);
-};
-
-void Mesh::Render() {
-    // Bind the vertex array object (defines how the vertex data should be interpreted), and vertex buffer (contains the vertex data). Then draw the faces.
-    glBindVertexArray(m_VertexArrayObject);
+    // bind & create the vertex buffer
+    glGenBuffers(1, &m_VertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexBufferObject);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        verts.size() * sizeof(Vertex),
+        verts.data(),
+        GL_STATIC_DRAW
+    );
 
-    glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
+    // bind & create the index buffer
+    glGenBuffers(1, &m_IndexBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_IndexBufferObject);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        indices.size() * sizeof(unsigned int),
+        indices.data(),
+        GL_STATIC_DRAW
+    );
+
+    // Set Shader Attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, position));
+    glEnableVertexAttribArray(0); // Vertex Positions
 
     glBindVertexArray(0);
+    glDeleteBuffers(1, &m_VertexBufferObject);
+    glDeleteBuffers(1, &m_IndexBufferObject);
+}
+
+Mesh::~Mesh()
+{
+    glDeleteVertexArrays(1, &m_VertexArrayObject);
+}
+
+void Mesh::Render()
+{
+    for (auto& mesh : m_subMeshes)
+        mesh->Render();
+
+    glBindVertexArray(m_VertexArrayObject);
+    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Mesh::parse(const aiNode* node, const aiScene* scene)
+{
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
+        parse(scene->mMeshes[node->mMeshes[i]], scene);
+
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+        parse(node->mChildren[i], scene);
+}
+
+void Mesh::parse(const aiMesh* mesh, const aiScene* scene)
+{
+    std::vector<Vertex> vertices;
+    Vertex vert;
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
+    {
+        vert = {};
+        vert.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+        vert.normal   = glm::vec3(mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z);
+        vertices.push_back(vert);
+    }
+
+    std::vector<unsigned int> indices;
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
+        for (unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
+            indices.push_back(mesh->mFaces[i].mIndices[j]);
+
+    m_subMeshes.push_back(
+        std::unique_ptr<Mesh>(new Mesh(vertices, indices))
+    );
 }

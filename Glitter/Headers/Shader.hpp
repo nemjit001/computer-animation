@@ -3,7 +3,6 @@
 #pragma once
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 #include <string>
 
 /// <summary>
@@ -32,14 +31,7 @@ public:
     /// </summary>
     void cleanup();
 
-    // Returns Shader Program ID (we could just make the attribute public if we want to)
-    GLuint getShaderID();
-
-    // Functions to Quickly find Uniform location by Name and Set a Value
-    void setInt(const std::string& name, int value) const;
-    void setFloat(const std::string& name, float value) const;
-    void setMat4(const std::string& name, glm::mat4 mat) const;
-    void setVec3(const std::string& name, glm::vec3 vec) const;
+    unsigned int getUniformLocation(std::string uniformName);
 
     /// <summary>
     /// Register a shader file and associated shader type to the shader program
