@@ -31,10 +31,10 @@ void main()
 
     vec3 kS = f0;
     vec3 kD = vec3(1.0) - kS;
-
-    vec3 brdf = (fresnel * normalDistribution * geometry) / (4.0 * dot(normal, viewDir));
-
-    vec3 color = (kD * diffuse + brdf * specular);
+    float coefficient =  ( normalDistribution * geometry) / (4.0f * max(0.00001f,dot(normal, viewDir)));
+    vec3 brdf = vec3(fresnel * coefficient);
+    
+    vec3 color = vec3((kD +0.3f) * diffuse + brdf * specular);
 
     outColor = vec4(color, 1.0);
 }
