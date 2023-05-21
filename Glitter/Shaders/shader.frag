@@ -1,6 +1,6 @@
 #version 430
 
-layout (location = 0) in vec3 vPos;
+vec3 WorldPos = vec3(0.0, 0.0, 0.0);
 
 out vec4 outColor;
 in vec3 Normal; 
@@ -8,7 +8,7 @@ in vec3 Normal;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
-uniform vec3 CamPos;
+uniform vec3 CamPos;        //TODO: if possible to get it real-time
 
 float PI = 3.14159265359;
 
@@ -48,13 +48,14 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 void main()
 {	
+    //hardcoded for now
     float metallic = 1.0; 
     float roughness = 0.5; 
-    vec3 albedo = vec3(1.0f, 1.0f, 0.0f);
-    vec3 LightPosition = vec3(10.0f, 0.0f, 10.0f);
+    vec3 albedo = vec3(1.0f, 1.0f, 0.0f);       //determines the colour
+    vec3 LightPosition = vec3(10.0f, 0.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
     vec3 LightColor =  vec3(23.47, 21.31, 20.79);
     vec3 N = normalize(Normal);
-    vec3 V = normalize(CamPos - vPos);
+    vec3 V = normalize(CamPos - WorldPos);
 
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
@@ -63,9 +64,9 @@ void main()
     vec3 Lo = vec3(0.0);
     
     // calculate per-light radiance
-    vec3 L = normalize(LightPosition - vPos);
+    vec3 L = normalize(LightPosition - WorldPos);
     vec3 H = normalize(V + L);
-    float distance    =  length(LightPosition - vPos);
+    float distance    =  length(LightPosition - WorldPos);
     float attenuation = 1.0 / (distance * distance);
     vec3 radiance     = LightColor * attenuation;        
         
