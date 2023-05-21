@@ -1,40 +1,96 @@
 #version 430
 
+layout (location = 0) in vec3 vPos;
+
+out vec4 outColor;
+in vec3 Normal; 
+
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
+uniform vec3 CamPos;
 
-out vec4 outColor;
+float PI = 3.14159265359;
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}  
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float NdotH = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH * NdotH;
+
+    float denom = NdotH2 * (a2 - 1.0) + 1.0;
+    return a2 / (PI * denom * denom);
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r * r) / 8.0;
+
+    float denom = NdotV * (1.0 - k) + k;
+    return NdotV / denom;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx1 = GeometrySchlickGGX(NdotV, roughness);
+    float ggx2 = GeometrySchlickGGX(NdotL, roughness);
+    return ggx1 * ggx2;
+}
 
 void main()
-{
-    vec3 white = vec3(1, 1, 0);  
-    float roughness = 0.2;        
-    float metallic = 0.8;      
+{	
+    float metallic = 1.0; 
+    float roughness = 0.5; 
+    vec3 albedo = vec3(1.0f, 1.0f, 0.0f);
+    vec3 LightPosition = vec3(10.0f, 0.0f, 10.0f);
+    vec3 LightColor =  vec3(23.47, 21.31, 20.79);
+    vec3 N = normalize(Normal);
+    vec3 V = normalize(CamPos - vPos);
 
-    // fresnel
-    vec3 viewDir = normalize(vec3(viewMatrix * modelMatrix * vec4(0, 0, 0, 1)) - gl_FragCoord.xyz);
-    vec3 normal = normalize(vec3(0, 0, 1));  
-    float fresnel = pow(1.0 - dot(viewDir, normal), 5.0);
-
-    // Normal Distribution
-    float roughnessSq = roughness * roughness;
-    float normalDistribution = exp(-dot(normal, normal) / (roughnessSq * (dot(normal, normal) + roughnessSq)));
-
-    // Geometry Factor
-    float geometry = 1.0; 
-
-    vec3 specular = vec3(0.04);  
-    vec3 diffuse = white - (white * metallic);
-
-    vec3 f0 = mix(vec3(0.04), white, metallic);
-
-    vec3 kS = f0;
-    vec3 kD = vec3(1.0) - kS;
-    float coefficient =  ( normalDistribution * geometry) / (4.0f * max(0.00001f,dot(normal, viewDir)));
-    vec3 brdf = vec3(fresnel * coefficient);
+    vec3 F0 = vec3(0.04); 
+    F0 = mix(F0, albedo, metallic);
+	           
+    // reflectance equation
+    vec3 Lo = vec3(0.0);
     
-    vec3 color = vec3((kD +0.3f) * diffuse + brdf * specular);
-
+    // calculate per-light radiance
+    vec3 L = normalize(LightPosition - vPos);
+    vec3 H = normalize(V + L);
+    float distance    =  length(LightPosition - vPos);
+    float attenuation = 1.0 / (distance * distance);
+    vec3 radiance     = LightColor * attenuation;        
+        
+    // cook-torrance brdf
+    float NDF = DistributionGGX(N, H, roughness);        
+    float G   = GeometrySmith(N, V, L, roughness);      
+    vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
+        
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;	  
+        
+    vec3 numerator    = NDF * G * F;
+    float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
+    vec3 specular     = numerator / denominator;  
+            
+    // add to outgoing radiance Lo
+    float NdotL = max(dot(N, L), 0.0);                
+    Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
+    
+    vec3 ambient = vec3(0.03) * albedo;
+    vec3 color = ambient + Lo;
+	
+    color = color / (color + vec3(1.0));
+    color = pow(color, vec3(1.0/2.2));  
+   
     outColor = vec4(color, 1.0);
-}
+}  

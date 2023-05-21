@@ -70,6 +70,7 @@ Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
 
     glShaderSource(shaderId, 1, (const char**)&pShaderCode, NULL);
     glCompileShader(shaderId);
+
     checkCompileErrors(shaderId, "VERTEX");
     delete[] pShaderCode;
 

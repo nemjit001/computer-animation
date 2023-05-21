@@ -3,6 +3,7 @@
 #include "Camera.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <array>
 
 Camera::Camera(glm::vec3 start_position, float start_yaw, float start_pitch, glm::vec3 start_up) : front(FRONT), movement_speed(SPEED), look_sensitivity(SENSITIVITY), fov(FOV)
 {
@@ -66,6 +67,24 @@ glm::mat4 Camera::GetCurrentProjectionMatrix(float screen_width, float screen_he
 {
 	return glm::perspective(glm::radians(fov), screen_width / screen_height, Z_NEAR, Z_FAR);
 }
+
+//std::array<glm::vec3, 4> LightSource(float distance, const glm::vec3& center)
+//{
+//	glm::vec3 up = center + glm::vec3(0.0f, distance, 0.0f);
+//	glm::vec3 down = center + glm::vec3(0.0f, -distance, 0.0f);
+//	glm::vec3 left = center + glm::vec3(-distance, 0.0f, 0.0f);
+//	glm::vec3 right = center + glm::vec3(distance, 0.0f, 0.0f);
+//
+//	return std::array<glm::vec3, 4>{ up, down, left, right };
+//}
+
+//glm::vec3 GetCameraPosition(glm::mat4 viewMatrix)
+//{
+//	glm::mat4 inverseViewMatrix = glm::inverse(viewMatrix);
+//	glm::vec3 cameraPosition = glm::vec3(inverseViewMatrix[3]);
+//	return cameraPosition;
+//}
+
 
 void Camera::UpdateCamera()
 {

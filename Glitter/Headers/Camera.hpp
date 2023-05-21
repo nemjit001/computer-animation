@@ -54,6 +54,9 @@ public:
 
 	// Get Projection Matrix
 	glm::mat4 GetCurrentProjectionMatrix(float screen_width, float screen_height);
+	
+	//std::array<glm::vec3, 4> LightSource(float distance, const glm::vec3& center);
+	//glm::vec3 GetCameraPosition(glm::mat4 viewMatrix);
 
 	// Move Camera from Keyboard Input
 	void MoveCamera(Movement_Direction direction, float deltaTime);

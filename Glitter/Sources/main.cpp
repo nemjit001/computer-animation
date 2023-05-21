@@ -107,11 +107,17 @@ int main(int argc, char* argv[])
         // Get View and Projection Matrics from Camera
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
         glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
+        //std::array<glm::vec3, 4> positions = main_camera.LightSource(1.0f, glm::vec3(0.0f, 0.0f, 0.0f)); 
+        //glm::vec3 cameraPosition = main_camera.GetCameraPosition(view);
+
 
         // Set Uniforms
         defaultShader.setMat4("viewMatrix", view);
         defaultShader.setMat4("modelMatrix", glm::mat4(1.0f));
         defaultShader.setMat4("projectionMatrix", projection);
+        defaultShader.setVec3("CamPos", glm::vec3(0.0f, 0.0f, 3.0f));
+        //defaultShader.SetvecArray("Light", positions);
+
 
         // Render Mesh
         exampleMesh.Render();
