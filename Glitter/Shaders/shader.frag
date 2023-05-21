@@ -10,7 +10,7 @@ void main()
 {
     vec3 white = vec3(1, 1, 0);  
     float roughness = 0.2;        
-    float metallic = 0.8;        
+    float metallic = 0.8;      
 
     // fresnel
     vec3 viewDir = normalize(vec3(viewMatrix * modelMatrix * vec4(0, 0, 0, 1)) - gl_FragCoord.xyz);
@@ -34,9 +34,7 @@ void main()
 
     vec3 brdf = (fresnel * normalDistribution * geometry) / (4.0 * dot(normal, viewDir));
 
-    vec3 ambient = vec3(0.03) * white;
-
-    vec3 color = (kD * diffuse + brdf * specular) + ambient;
+    vec3 color = (kD * diffuse + brdf * specular);
 
     outColor = vec4(color, 1.0);
 }

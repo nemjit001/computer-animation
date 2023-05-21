@@ -5,6 +5,31 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+void checkCompileErrors(GLuint shader, std::string type)
+{
+    GLint success;
+    GLchar infoLog[1024];
+    if (type != "PROGRAM")
+    {
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
+    }
+    else
+    {
+        glGetProgramiv(shader, GL_LINK_STATUS, &success);
+        if (!success)
+        {
+            glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+        }
+    }
+}
+
 Shader::Shader()
     :
     m_programId(0)
@@ -45,6 +70,7 @@ Shader& Shader::registerShader(const char* filepath, GLenum shaderType)
 
     glShaderSource(shaderId, 1, (const char**)&pShaderCode, NULL);
     glCompileShader(shaderId);
+    checkCompileErrors(shaderId, "VERTEX");
     delete[] pShaderCode;
 
     int success = 0;
@@ -65,6 +91,7 @@ Shader& Shader::link()
     int success = 0;
 
     glLinkProgram(m_programId);
+    checkCompileErrors(m_programId, "PROGRAM");
     glGetProgramiv(m_programId, GL_LINK_STATUS, &success);
 
     if (success == GL_FALSE)
