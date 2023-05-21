@@ -78,12 +78,12 @@ glm::mat4 Camera::GetCurrentProjectionMatrix(float screen_width, float screen_he
 //	return std::array<glm::vec3, 4>{ up, down, left, right };
 //}
 
-//glm::vec3 GetCameraPosition(glm::mat4 viewMatrix)
-//{
-//	glm::mat4 inverseViewMatrix = glm::inverse(viewMatrix);
-//	glm::vec3 cameraPosition = glm::vec3(inverseViewMatrix[3]);
-//	return cameraPosition;
-//}
+glm::vec3 Camera::GetCameraPosition(glm::mat4 viewMatrix)
+{
+	glm::mat4 inverseViewMatrix = glm::inverse(viewMatrix);
+	glm::vec3 cameraPosition = glm::vec3(inverseViewMatrix[3]);
+	return cameraPosition;
+}
 
 
 void Camera::UpdateCamera()

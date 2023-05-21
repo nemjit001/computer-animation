@@ -8,7 +8,7 @@ in vec3 Normal;
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
-uniform vec3 CamPos;        //TODO: if possible to get it real-time
+uniform vec3 CamPos;        
 
 float PI = 3.14159265359;
 
