@@ -70,7 +70,9 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
 
     // Set Shader Attributes
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, position));
-    glEnableVertexAttribArray(0); // Vertex Positions
+    glEnableVertexAttribArray(0);   // Vertex Positions
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, normal));
+    glEnableVertexAttribArray(1);   // Normals
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &m_VertexBufferObject);
