@@ -68,7 +68,7 @@ glm::mat4 Camera::GetCurrentProjectionMatrix(float screen_width, float screen_he
 	return glm::perspective(glm::radians(fov), screen_width / screen_height, Z_NEAR, Z_FAR);
 }
 
-//std::array<glm::vec3, 4> LightSource(float distance, const glm::vec3& center)
+//std::array<glm::vec3, 4> Camera::LightSource(float distance, const glm::vec3& center)
 //{
 //	glm::vec3 up = center + glm::vec3(0.0f, distance, 0.0f);
 //	glm::vec3 down = center + glm::vec3(0.0f, -distance, 0.0f);
@@ -77,6 +77,12 @@ glm::mat4 Camera::GetCurrentProjectionMatrix(float screen_width, float screen_he
 //
 //	return std::array<glm::vec3, 4>{ up, down, left, right };
 //}
+glm::vec3 Camera::LightSource(float distance, const glm::vec3& center)
+{
+	glm::vec3 position = center + glm::vec3(0.0f, distance, 0.0f);
+	
+	return glm::vec3 {position};
+}
 
 glm::vec3 Camera::GetCameraPosition(glm::mat4 viewMatrix)
 {

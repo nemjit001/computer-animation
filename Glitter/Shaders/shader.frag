@@ -1,14 +1,15 @@
 #version 430
 
-vec3 WorldPos = vec3(0.0, 0.0, 0.0);
+in vec3 WorldPos;
+in vec3 Normal; 
 
 out vec4 outColor;
-in vec3 Normal; 
 
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
-uniform vec3 CamPos;        
+uniform vec3 CamPos;    
+uniform vec3 LightPosition;
 
 float PI = 3.14159265359;
 
@@ -50,10 +51,10 @@ void main()
 {	
     //hardcoded for now
     float metallic = 1.0; 
-    float roughness = 0.5; 
+    float roughness = 0.1; 
     vec3 albedo = vec3(1.0f, 1.0f, 0.0f);       //determines the colour
-    vec3 LightPosition = vec3(10.0f, 0.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
-    vec3 LightColor =  vec3(23.47, 21.31, 20.79);
+    //vec3 LightPosition = vec3(10.0f, 10.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
+    vec3 LightColor =  vec3(20.0, 20.0, 10.0);
     vec3 N = normalize(Normal);
     vec3 V = normalize(CamPos - WorldPos);
 
