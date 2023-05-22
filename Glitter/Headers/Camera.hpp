@@ -41,6 +41,7 @@ public:
 	float movement_speed;
 	float look_sensitivity;
 	float fov;
+	bool enabled;
 
 	// Customizable Constructor
 	Camera(glm::vec3 start_position, float start_yaw, float start_pitch, glm::vec3 start_up);

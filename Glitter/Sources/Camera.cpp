@@ -19,6 +19,8 @@ Camera::Camera(glm::vec3 start_position) : front(FRONT), movement_speed(SPEED), 
 	yaw = YAW;
 	pitch = PITCH;
 	world_up = UP;
+	enabled = true;
+
 	UpdateCamera();
 }
 
@@ -29,6 +31,10 @@ Camera::~Camera()
 
 void Camera::MoveCamera(Movement_Direction direction, float deltaTime)
 {
+	// If camera is disabled ignore
+	if (!enabled)
+		return;
+
 	float smooth_speed = movement_speed * deltaTime;
 
 	if (direction == FWD)
@@ -43,6 +49,10 @@ void Camera::MoveCamera(Movement_Direction direction, float deltaTime)
 
 void Camera::RotateCamera(float x_offset, float y_offset)
 {
+	// If camera is disabled ignore
+	if (!enabled)
+		return;
+
 	// Update Pitch and Yaw
 	yaw += x_offset * look_sensitivity;
 	pitch += y_offset * look_sensitivity;

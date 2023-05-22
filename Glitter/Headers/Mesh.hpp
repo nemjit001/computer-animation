@@ -11,7 +11,7 @@ class Mesh
 {
 public:
 	// Delete copy and assignment operators
-	Mesh(Mesh const&) = delete;
+	//Mesh(Mesh const&) = delete;
 	Mesh& operator=(Mesh const&) = delete;
 
 	// constructors
