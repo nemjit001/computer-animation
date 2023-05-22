@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
         // Render GUI
         ImGui::Begin("Control Window");
         ImGui::Text("DeltaTime: %f" , deltaTime);
-        ImGui::Text("SPACE to enable/disable cursor!");
+        ImGui::Text("Use SPACEBAR to enable/disable cursor!");
         if (ImGui::Button("Switch Model"))
             guiButtonCallback(MODEL_SWITCH);
         ImGui::ColorEdit3("Base color", (float*)base_color);
