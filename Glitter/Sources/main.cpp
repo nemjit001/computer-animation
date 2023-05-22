@@ -123,6 +123,9 @@ int main(int argc, char* argv[])
 
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };
+    float roughness = 0.5f;
+    float metallic = 0.5f;
+
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -167,6 +170,9 @@ int main(int argc, char* argv[])
         defaultShader.setVec3("LightPosition", glm::vec3(light_position[0], light_position[1], light_position[2]));
         defaultShader.setVec3("BaseColor", glm::vec3(base_color[0], base_color[1], base_color[2]));
         defaultShader.setVec3("ManualLightColor", glm::vec3(light_color[0], light_color[1], light_color[2]));
+        defaultShader.setFloat("Roughness", roughness);
+        defaultShader.setFloat("Metallic", metallic);
+
 
         // Render Mesh
         meshes[mesh_index]->Render();
@@ -180,6 +186,8 @@ int main(int argc, char* argv[])
         ImGui::ColorEdit3("Base color", (float*)base_color);
         ImGui::ColorEdit3("Manual light color", (float*)light_color);
         ImGui::SliderFloat3("Light position", light_position, -5.0f, 5.0f);
+        ImGui::SliderFloat("Roughness", &roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Metallic", &metallic, 0.0f, 1.0f);
         ImGui::Checkbox("Toggle wireframe", &wireframe_mode);
         ImGui::Checkbox("Show bones", &show_bones_flag);
         ImGui::End();
