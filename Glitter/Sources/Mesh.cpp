@@ -73,6 +73,8 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glEnableVertexAttribArray(0);   // Vertex Positions
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, normal));
     glEnableVertexAttribArray(1);   // Normals
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid *) offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(2);   // Texture Coordinates
 
     glBindVertexArray(0);
     glDeleteBuffers(1, &m_VertexBufferObject);
@@ -111,6 +113,10 @@ void Mesh::parse(const aiMesh* mesh, const aiScene* scene)
         vert = {};
         vert.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         vert.normal   = glm::vec3(mesh->mNormals[i].x,  mesh->mNormals[i].y,  mesh->mNormals[i].z);
+
+        // Get Texture Coordinates from UV Channel 0
+        assert(mesh->mTextureCoords[0]);
+        vert.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         vertices.push_back(vert);
     }
 

@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "Mesh.hpp"
+#include <Mesh.hpp>
 #include <Camera.hpp>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
@@ -20,12 +20,14 @@
 
 enum GUI_BUTTON {
     MODEL_SWITCH,
-    MODEL_SELECT
+    MODEL_SELECT,
+    CAMERA_MODE_SWITCH
 };
 
 // Input Function Declarations
 void processKeyboardInput(GLFWwindow* window);
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos);
+void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void guiButtonCallback(GUI_BUTTON);
 
@@ -33,6 +35,11 @@ void guiButtonCallback(GUI_BUTTON);
 Mesh* meshes[2];
 //glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
 float light_position[3] = { -1.0f, 1.0f - 2.0f };
+float manual_metallic = 0.0f;
+float manual_roughness = 0.2f;
+
+// GUI Globals
+char* camera_mode_string = "Camera Type: Normal Camera";
 
 // Time Keeping Globals
 float prev_frame_time = 0.0f;
@@ -80,6 +87,7 @@ int main(int argc, char* argv[])
     // Set Callbacks
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
     glfwSetCursorPosCallback(mWindow, mouseMovementCallback);
+    glfwSetScrollCallback(mWindow, mouseScrollCallback);
 
     // Hide Cursor and Capture Mouse
     glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -103,8 +111,6 @@ int main(int argc, char* argv[])
     defaultShader.init();
 
     defaultShader
-        //.registerShader("Shaders/shader.vert", GL_VERTEX_SHADER)
-        //.registerShader("Shaders/shader.frag", GL_FRAGMENT_SHADER)
         .registerShader("Shaders/lighting_shader.vert", GL_VERTEX_SHADER)
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
@@ -167,6 +173,8 @@ int main(int argc, char* argv[])
         defaultShader.setVec3("LightPosition", glm::vec3(light_position[0], light_position[1], light_position[2]));
         defaultShader.setVec3("BaseColor", glm::vec3(base_color[0], base_color[1], base_color[2]));
         defaultShader.setVec3("ManualLightColor", glm::vec3(light_color[0], light_color[1], light_color[2]));
+        defaultShader.setFloat("ManualMetallic", manual_metallic);
+        defaultShader.setFloat("ManualRoughness", manual_roughness);
 
         // Render Mesh
         meshes[mesh_index]->Render();
@@ -180,7 +188,12 @@ int main(int argc, char* argv[])
         ImGui::ColorEdit3("Base color", (float*)base_color);
         ImGui::ColorEdit3("Manual light color", (float*)light_color);
         ImGui::SliderFloat3("Light position", light_position, -5.0f, 5.0f);
+        ImGui::SliderFloat("Manual metallic", &manual_metallic, 0.0f, 1.0f);
+        ImGui::SliderFloat("Manual roughness", &manual_roughness, 0.0f, 1.0f);
         ImGui::Checkbox("Toggle wireframe", &wireframe_mode);
+        ImGui::Text(camera_mode_string);
+        if (ImGui::Button("Switch Camera Modes"))
+            guiButtonCallback(CAMERA_MODE_SWITCH);
         ImGui::Checkbox("Show bones", &show_bones_flag);
         ImGui::End();
 
@@ -231,6 +244,10 @@ void processKeyboardInput(GLFWwindow* window)
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
 
+    // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
+    if (main_camera.arcball_mode)
+        return;
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         main_camera.MoveCamera(FWD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -259,7 +276,15 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
     lastX = xpos;
     lastY = ypos;
 
-    main_camera.RotateCamera(xoffset, yoffset);
+    if (main_camera.arcball_mode)
+        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
+    else
+        main_camera.RotateCamera(xoffset, yoffset);
+}
+
+void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
+{
+    main_camera.MoveArcballCamera(y_offset, deltaTime);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -274,5 +299,15 @@ void guiButtonCallback(GUI_BUTTON button)
         mesh_index++;
         if (mesh_index == num_meshes)
             mesh_index = 0;
+    }
+
+    else if (button == CAMERA_MODE_SWITCH)
+    {
+        main_camera.arcball_mode = !main_camera.arcball_mode;
+
+        if (main_camera.arcball_mode)
+            camera_mode_string = "Camera Type: Arcball Camera";
+        else
+            camera_mode_string = "Camera Type: Normal Camera";
     }
 }

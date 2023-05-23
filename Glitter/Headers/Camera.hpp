@@ -13,11 +13,13 @@ enum Movement_Direction {
 };
 
 // Constraints and Defaults
-const float PITCH_CONSTRAINT = 90.0f;
+const float PITCH_CONSTRAINT = 89.0f;
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
 const float SPEED = 2.5f;
 const float SENSITIVITY = 0.1f;
+const float ARCBALL_SENSITIVITY = 5.0f;
+const float ARCBALL_MOVE_SENSITIVITY = 0.2f;
 const float FOV = 45.0f;
 const float Z_NEAR = 0.1f;
 const float Z_FAR = 100.0f;
@@ -40,8 +42,11 @@ public:
 	// Settings
 	float movement_speed;
 	float look_sensitivity;
+	float arcball_sensitivity;
+	float arcball_move_sensitivity;
 	float fov;
 	bool enabled;
+	bool arcball_mode;
 
 	// Customizable Constructor
 	Camera(glm::vec3 start_position, float start_yaw, float start_pitch, glm::vec3 start_up);
@@ -59,10 +64,19 @@ public:
 	// Move Camera from Keyboard Input
 	void MoveCamera(Movement_Direction direction, float deltaTime);
 
+	// Move Camera from Mouse Scroll Input in Arcball Mode
+	void MoveArcballCamera(float y_offset, float deltaTime);
+
 	// Rotate Camera from Mouse Movement
 	void RotateCamera(float x_offset, float y_offset);
+
+	// Rotate Camera from Mouse Movement, in an Arcball Fashion
+	void RotateArcballCamera(float x_offset, float y_offset, float screen_width, float screen_height, float deltaTime);
 
 private:
 	// Update Camera Vectors after Rotation (also after constructing)
 	void UpdateCamera();
+
+	// Update Camera Vectors after Arcball Rotation
+	void UpdateArcballCamera();
 };

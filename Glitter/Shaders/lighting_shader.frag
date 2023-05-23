@@ -1,7 +1,8 @@
 #version 430
 
 in vec3 WorldPos;
-in vec3 Normal; 
+in vec3 Normal;
+in vec2 TexCoords;
 
 out vec4 outColor;
 
@@ -12,6 +13,8 @@ uniform vec3 CamPos;
 uniform vec3 LightPosition;
 uniform vec3 BaseColor;
 uniform vec3 ManualLightColor;
+uniform float ManualMetallic;
+uniform float ManualRoughness;
 
 float PI = 3.14159265359;
 
@@ -52,8 +55,8 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 void main()
 {	
     //hardcoded for now
-    float metallic = 1.0; 
-    float roughness = 0.1; 
+    float metallic = ManualMetallic; 
+    float roughness = ManualRoughness; 
     vec3 albedo = BaseColor;       //determines the colour
     //vec3 LightPosition = vec3(10.0f, 10.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
     vec3 LightColor = ManualLightColor;
