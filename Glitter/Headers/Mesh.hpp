@@ -1,8 +1,10 @@
 #pragma once
 #include "Vertex.hpp"
+#include "Shader.hpp"
 
 #include <vector>
 #include <memory>
+#include <map>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -16,22 +18,32 @@ public:
 
 	// constructors
 	Mesh();
-	Mesh(std::string const& filename);
+	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render();
 
 private:
-	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices);
+	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures);
 
-	void parse(const aiNode* node, const aiScene* scene);
-	void parse(const aiMesh* mesh, const aiScene* scene);
+	void Parse(const aiNode* node, const aiScene* scene);
+	void Parse(const aiMesh* mesh, const aiScene* scene);
+	void SetBoneToDefault(Vertex& vertex);
+	void SetVertexBoneData(Vertex& vertex, int boneId, float weight);
+	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
+	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
+	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
+	inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
 
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
-	// std::vector<Bone> m_bones;
+	std::vector<Texture> m_textures;
+	std::map<std::string, BoneInfo> m_bones;
+	std::string dir;
+	int m_boneCounter = 0;
+	Shader shader;
 	std::vector<std::unique_ptr<Mesh>> m_subMeshes;
 
-	unsigned int m_VertexBufferObject;
-	unsigned int m_IndexBufferObject;
-	unsigned int m_VertexArrayObject;
+	unsigned int m_VBO;
+	unsigned int m_IBO;
+	unsigned int m_VAO;
 };
