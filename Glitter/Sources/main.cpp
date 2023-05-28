@@ -32,7 +32,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void guiButtonCallback(GUI_BUTTON);
 
 // Rendering Globals
-Mesh* meshes[2];
+Mesh* meshes[3];
 //glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
 float light_position[3] = { -1.0f, 1.0f - 2.0f };
 float manual_metallic = 0.0f;
@@ -56,7 +56,7 @@ bool spacebar_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
 unsigned int mesh_index = 0;                                // Current Mesh
-const unsigned int num_meshes = 2;                          // Total Number of Meshes
+const unsigned int num_meshes = 3;                          // Total Number of Meshes
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -123,9 +123,11 @@ int main(int argc, char* argv[])
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
     Mesh mesh1("Assets/suzanne.obj", defaultShader);
+    Mesh mesh2("Assets/BASEmodel.fbx", defaultShader);
 
     meshes[0] = &mesh0;
     meshes[1] = &mesh1;
+    meshes[2] = &mesh2;
 
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };

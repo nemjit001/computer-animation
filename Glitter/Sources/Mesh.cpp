@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
+#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals |  aiProcess_JoinIdenticalVertices )
 
 // System Headers
 #include <stb_image.h>
@@ -25,9 +26,7 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(
         filename,
-        aiProcessPreset_TargetRealtime_MaxQuality |
-        aiProcess_OptimizeGraph |
-        aiProcess_FlipUVs
+        SCENE_LOAD_FLAGS
     );
 
     if (!scene)
@@ -38,6 +37,9 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     {
         dir = filename.substr(0, filename.find_last_of('/'));
         Parse(scene->mRootNode, scene);
+
+        // Parse animations
+        ParseAnimations(scene);
     }
 }
 
@@ -142,6 +144,55 @@ void Mesh::Render()
 
 }
 
+void Mesh::ParseAnimations(const aiScene* scene)
+{
+    // Check for animations
+    if (scene->HasAnimations())
+    {
+        unsigned int n_animations = scene->mNumAnimations;
+        std::cout << "Found " << n_animations << " animations in Scene!" << std::endl;
+
+        // Retrieve animations and parse them to AnimationClip objects
+        for (unsigned int i = 0; i < n_animations; i++)
+        {
+            aiAnimation* current_animation = scene->mAnimations[i];
+
+            // TODO: Currently considers same size of all channels (realistic?)
+            // Parse channels
+            std::vector<AnimationPose> poses;
+            for (unsigned int j = 0; j < current_animation->mNumChannels; j++)
+            {
+                aiNodeAnim* current_channel = current_animation->mChannels[j];
+
+                std::string channel_bone_name = std::string(current_channel->mNodeName.data);           // Get name of affected node
+
+                // Parse SQTs of channel
+                std::vector<SQT> sqts;
+                for (unsigned int k = 0; k < current_channel->mNumPositionKeys; k++)
+                {
+                    SQT new_sqt;
+                    new_sqt.time = current_channel->mPositionKeys->mTime;
+                    new_sqt.scale = ConvertVector3DToGLMFormat(current_channel->mScalingKeys[k].mValue);
+                    new_sqt.translation = ConvertVector3DToGLMFormat(current_channel->mPositionKeys[k].mValue);
+                    new_sqt.rotation = ConvertQuaternionToGLMFormat(current_channel->mRotationKeys[k].mValue);
+
+                    sqts.push_back(new_sqt);
+                }
+
+                AnimationPose new_pose;
+                new_pose.bone_name = channel_bone_name;
+                new_pose.bonePoses = sqts;
+
+                // Add AnimationPose
+                poses.push_back(new_pose);
+            }
+
+            AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), current_animation->mDuration, current_animation->mTicksPerSecond, poses);
+            m_animations.push_back(new_animation_clip);
+        }
+    }
+}
+
 void Mesh::Parse(const aiNode* node, const aiScene* scene)
 {
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
@@ -153,6 +204,7 @@ void Mesh::Parse(const aiNode* node, const aiScene* scene)
 
 void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
 {
+    // Parse vertices
     std::vector<Vertex> vertices;
     Vertex vert;
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -164,14 +216,23 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
         if (mesh->mTextureCoords[0])
         {
             vert.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-            vert.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-            vert.biTangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+            if (mesh->mTangents)
+            {
+                vert.tangent = glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+                vert.biTangent = glm::vec3(mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+            }
+            else
+            {
+                vert.tangent = glm::vec3(1.0f);
+                vert.biTangent = glm::vec3(1.0f);
+            }
         }
         else
             vert.texCoords = glm::vec2(0.0f, 0.0f);
         vertices.push_back(vert);
     }
 
+    // Parse textures
     aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
     std::vector<Texture> textures;
     std::vector<Texture> diffuseMaps = LoadMaterialTextures(mat, aiTextureType_DIFFUSE, "texture_diffuse");
@@ -183,10 +244,18 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     std::vector<Texture> heightMaps = LoadMaterialTextures(mat, aiTextureType_AMBIENT, "texture_height");
     textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
+    // Parse indices
     std::vector<unsigned int> indices;
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
         for (unsigned int j = 0; j < mesh->mFaces[i].mNumIndices; j++)
             indices.push_back(mesh->mFaces[i].mIndices[j]);
+
+    this->m_vertices = vertices;
+    this->m_indices = indices;
+    this->m_textures = textures;
+
+    // Parse bones
+    ExtractBoneWeightForVertices(this->m_vertices, mesh, scene);
 
     m_subMeshes.push_back(
         std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures))
@@ -202,10 +271,12 @@ void Mesh::SetBoneToDefault(Vertex& vertex)
     }
 }
 
-void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene)
+void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene)
 {
     auto& boneInfoMap = m_bones;
     int& boneCount = m_boneCounter;
+
+    std::cout << "Found " << mesh->mNumBones << " Bones in Mesh " << mesh->mName.C_Str() << std::endl;
 
     for (int boneIndex = 0; boneIndex < mesh->mNumBones; boneIndex++)
     {
@@ -259,6 +330,28 @@ inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
     to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
     to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
     return to;
+}
+
+// Converts aiVector3D to GLM::vec3
+inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src)
+{
+    glm::vec3 res;
+    res.x = src.x;
+    res.y = src.y;
+    res.z = src.z;
+    return res;
+}
+
+// Converts aiQuaternion to GLM::quat
+inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src)
+{
+    // TODO: Double check, because GLM uses a weird order of components
+    glm::quat res;
+    res.x = src.x;
+    res.y = src.y;
+    res.z = src.z;
+    res.w = src.w;
+    return res;
 }
 
 std::vector<Texture> Mesh::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)

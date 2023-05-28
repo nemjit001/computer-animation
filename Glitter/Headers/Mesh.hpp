@@ -1,6 +1,7 @@
 #pragma once
 #include "Vertex.hpp"
 #include "Shader.hpp"
+#include "AnimationClip.hpp"
 
 #include <vector>
 #include <memory>
@@ -27,17 +28,21 @@ private:
 
 	void Parse(const aiNode* node, const aiScene* scene);
 	void Parse(const aiMesh* mesh, const aiScene* scene);
+	void ParseAnimations(const aiScene* scene);
 	void SetBoneToDefault(Vertex& vertex);
 	void SetVertexBoneData(Vertex& vertex, int boneId, float weight);
-	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, aiMesh* mesh, const aiScene* scene);
+	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene);
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
 	inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
+	inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src);
+	inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src);
 
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
 	std::vector<Texture> m_textures;
 	std::map<std::string, BoneInfo> m_bones;
+	std::vector<AnimationClip> m_animations;
 	std::string dir;
 	int m_boneCounter = 0;
 	Shader shader;
