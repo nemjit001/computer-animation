@@ -121,8 +121,8 @@ int main(int argc, char* argv[])
     Application app = Application();
     app.init();
 
-    Mesh mesh0("Assets/cube.obj");
-    Mesh mesh1("Assets/suzanne.obj");
+    Mesh mesh0("Assets/cube.obj", defaultShader);
+    Mesh mesh1("Assets/suzanne.obj", defaultShader);
 
     meshes[0] = &mesh0;
     meshes[1] = &mesh1;
