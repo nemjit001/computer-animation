@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals |  aiProcess_JoinIdenticalVertices )
+#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords | aiProcess_PreTransformVertices)
 
 // System Headers
 #include <stb_image.h>
@@ -43,11 +43,12 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     }
 }
 
-Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures)
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader)
     :
     m_vertices(verts),
     m_indices(indices),
-    m_textures(textures)
+    m_textures(textures),
+    shader(shader)
 {
     // bind the default vertex array object
     glGenBuffers(1, &m_VAO);
@@ -107,10 +108,24 @@ Mesh::~Mesh()
     glDeleteVertexArrays(1, &m_VAO);
 }
 
-void Mesh::Render()
+void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness)
 {
+    // Use shader
+    shader.use();
+
+    // Pass uniforms
+    shader.setMat4("viewMatrix", view);
+    shader.setMat4("modelMatrix", glm::mat4(1.0f));
+    shader.setMat4("projectionMatrix", projection);
+    shader.setVec3("CamPos", cam_pos);
+    shader.setVec3("LightPosition", light_pos);
+    shader.setVec3("BaseColor", base_color);
+    shader.setVec3("ManualLightColor", manual_light_color);
+    shader.setFloat("ManualMetallic", manual_metallic);
+    shader.setFloat("ManualRoughness", manual_roughness);
+
     for (auto& mesh : m_subMeshes)
-        mesh->Render();
+        mesh->Render(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness);
 
     // bind appropriate textures
     unsigned int diffuseNr = 1;
@@ -258,7 +273,7 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     ExtractBoneWeightForVertices(this->m_vertices, mesh, scene);
 
     m_subMeshes.push_back(
-        std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures))
+        std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures, shader))
     );
 }
 
@@ -410,8 +425,16 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        if (format == GL_RGBA)
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        }
+        else
+        {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        }
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -424,4 +447,9 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     }
 
     return textureID;
+}
+
+Shader Mesh::getShader()
+{
+    return shader;
 }

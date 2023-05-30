@@ -32,7 +32,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void guiButtonCallback(GUI_BUTTON);
 
 // Rendering Globals
-Mesh* meshes[3];
+Mesh* meshes[4];
 //glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
 float light_position[3] = { -1.0f, 1.0f - 2.0f };
 float manual_metallic = 0.0f;
@@ -56,7 +56,7 @@ bool spacebar_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
 unsigned int mesh_index = 0;                                // Current Mesh
-const unsigned int num_meshes = 3;                          // Total Number of Meshes
+const unsigned int num_meshes = 4;                          // Total Number of Meshes
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -106,11 +106,20 @@ int main(int argc, char* argv[])
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    // create and link shader program using our vert & frag shaders
+    // create and link simple shader
     Shader defaultShader = Shader();
     defaultShader.init();
 
     defaultShader
+        .registerShader("Shaders/lighting_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader_simple.frag", GL_FRAGMENT_SHADER)
+        .link();
+
+    // create and link texture shader
+    Shader textureShader = Shader();
+    textureShader.init();
+
+    textureShader
         .registerShader("Shaders/lighting_shader.vert", GL_VERTEX_SHADER)
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
@@ -124,10 +133,12 @@ int main(int argc, char* argv[])
     Mesh mesh0("Assets/cube.obj", defaultShader);
     Mesh mesh1("Assets/suzanne.obj", defaultShader);
     Mesh mesh2("Assets/BASEmodel.fbx", defaultShader);
+    Mesh mesh3("Assets/test_model.fbx", textureShader);
 
     meshes[0] = &mesh0;
     meshes[1] = &mesh1;
     meshes[2] = &mesh2;
+    meshes[3] = &mesh3;
 
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };
@@ -161,25 +172,14 @@ int main(int argc, char* argv[])
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        defaultShader.use();
+        //defaultShader.use();
 
         // Get View and Projection Matrics from Camera
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
         glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
-        // Set Uniforms
-        defaultShader.setMat4("viewMatrix", view);
-        defaultShader.setMat4("modelMatrix", glm::mat4(1.0f));
-        defaultShader.setMat4("projectionMatrix", projection);
-        defaultShader.setVec3("CamPos", main_camera.position);
-        defaultShader.setVec3("LightPosition", glm::vec3(light_position[0], light_position[1], light_position[2]));
-        defaultShader.setVec3("BaseColor", glm::vec3(base_color[0], base_color[1], base_color[2]));
-        defaultShader.setVec3("ManualLightColor", glm::vec3(light_color[0], light_color[1], light_color[2]));
-        defaultShader.setFloat("ManualMetallic", manual_metallic);
-        defaultShader.setFloat("ManualRoughness", manual_roughness);
-
         // Render Mesh
-        meshes[mesh_index]->Render();
+        meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
 
         // Render GUI
         ImGui::Begin("Control Window");
@@ -211,6 +211,7 @@ int main(int argc, char* argv[])
     app.shutdown();
 
     defaultShader.cleanup();
+    textureShader.cleanup();
 
     // Clean up GUI
     ImGui_ImplOpenGL3_Shutdown();

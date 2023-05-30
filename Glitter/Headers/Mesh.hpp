@@ -21,10 +21,11 @@ public:
 	Mesh();
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
-	void Render();
+	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
+	Shader getShader();
 
 private:
-	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures);
+	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
 
 	void Parse(const aiNode* node, const aiScene* scene);
 	void Parse(const aiMesh* mesh, const aiScene* scene);

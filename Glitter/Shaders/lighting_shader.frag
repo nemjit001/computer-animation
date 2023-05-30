@@ -15,6 +15,8 @@ uniform vec3 BaseColor;
 uniform vec3 ManualLightColor;
 uniform float ManualMetallic;
 uniform float ManualRoughness;
+uniform sampler2D DiffuseTexture;
+uniform sampler2D SpecularTexture;
 
 float PI = 3.14159265359;
 
@@ -57,7 +59,8 @@ void main()
     //hardcoded for now
     float metallic = ManualMetallic; 
     float roughness = ManualRoughness; 
-    vec3 albedo = BaseColor;       //determines the colour
+//    vec3 albedo = BaseColor;       //determines the colour
+    vec3 albedo = mix(texture(DiffuseTexture, TexCoords).rgb, BaseColor, 0.1f);       //determines the colour
     //vec3 LightPosition = vec3(10.0f, 10.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
     vec3 LightColor = ManualLightColor;
     vec3 N = normalize(Normal);
@@ -88,6 +91,7 @@ void main()
     vec3 numerator    = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
     vec3 specular     = numerator / denominator;  
+    specular *= texture(SpecularTexture, TexCoords).rgb;
             
     // add to outgoing radiance Lo
     float NdotL = max(dot(N, L), 0.0);                
