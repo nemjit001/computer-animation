@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
     Mesh mesh1("Assets/suzanne.obj", defaultShader);
-    Mesh mesh2("Assets/BASEmodel.fbx", defaultShader);
+    Mesh mesh2("Assets/BASEmodel.fbx", textureShader);
     Mesh mesh3("Assets/test_model.fbx", textureShader);
 
     meshes[0] = &mesh0;
