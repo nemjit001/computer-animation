@@ -279,6 +279,7 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     );
 }
 
+// TODO: this must be done in the vert constuctor
 void Mesh::SetBoneToDefault(Vertex& vertex)
 {
     for (int i = 0; i < MAXIMUM_BONES; i++)
