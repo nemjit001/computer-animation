@@ -181,7 +181,17 @@ int main(int argc, char* argv[])
         glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
         // Render Mesh
-        meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
+        meshes[mesh_index]->Render(
+            view,
+            glm::mat4(1.0f),
+            projection,
+            main_camera.position,
+            glm::vec3(light_position[0], light_position[1], light_position[2]),
+            glm::vec3(base_color[0], base_color[1], base_color[2]),
+            glm::vec3(light_color[0], light_color[1], light_color[2]),
+            manual_metallic,
+            manual_roughness
+        );
 
         // Render GUI
         ImGui::Begin("Control Window");
