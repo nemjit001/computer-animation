@@ -35,9 +35,9 @@ private:
 	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene);
 	std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 	unsigned int TextureFromFile(const char* path, const std::string& directory, bool gamma = false);
-	inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
-	inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src);
-	inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src);
+	inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
+	inline glm::vec3 ConvertVector3DToGLMFormat(const aiVector3D& src);
+	inline glm::quat ConvertQuaternionToGLMFormat(const aiQuaternion& src);
 
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
