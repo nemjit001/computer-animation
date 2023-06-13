@@ -1,10 +1,11 @@
 #include "GUI.hpp"
 
-GUI::GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings)
+GUI::GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer)
     :
     p_window(pWindow),
     m_camera(camera),
     m_sceneSettings(sceneSettings),
+    m_timer(timer),
     m_cameraMode("Camera Type: Normal Camera")
 {
     //
@@ -29,8 +30,10 @@ void GUI::Render()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    TimeData time = m_timer.GetData();
+
     ImGui::Begin("Control Window");
-    //ImGui::Text("DeltaTime: %f", deltaTime);
+    ImGui::Text("DeltaTime: %f", time.DeltaTime);
     ImGui::Text("Use SPACEBAR to enable/disable cursor!");
     if (ImGui::Button("Switch Model"))
         GuiButtonCallback(GUI_BUTTON::MODEL_TOGGLE);

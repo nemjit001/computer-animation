@@ -1,6 +1,7 @@
 // Local Headers
 #include "glitter.hpp"
 #include "Shader.hpp"
+#include "Timer.hpp"
 #include "GUI.hpp"
 #include "Application.hpp"
 
@@ -42,15 +43,12 @@ SceneSettings g_renderData =
     false                   // default bone visibility
 };
 
-// Time Keeping Globals
-float prev_frame_time = 0.0f;
-float deltaTime = 0.0f;
+// Create Camera Object
+Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
-
-// Create Camera Object
-Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -113,7 +111,7 @@ int main(int argc, char* argv[])
     app.init();
 
     // Initialize our GUI
-    GUI gui = GUI(mWindow, main_camera, g_renderData);
+    GUI gui = GUI(mWindow, main_camera, g_renderData, g_timer);
     gui.Init();
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
@@ -134,10 +132,7 @@ int main(int argc, char* argv[])
         // Tick the application state before the graphics update
         app.tick();
 
-        // Update Time
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - prev_frame_time;
-        prev_frame_time = currentFrame;
+        g_timer.Tick();
 
         // Process Keyboard Input
         processKeyboardInput(mWindow);
@@ -219,14 +214,16 @@ void processKeyboardInput(GLFWwindow* window)
     if (main_camera.arcball_mode)
         return;
 
+    TimeData time = g_timer.GetData();
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        main_camera.MoveCamera(FWD, deltaTime);
+        main_camera.MoveCamera(FWD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        main_camera.MoveCamera(AFT, deltaTime);
+        main_camera.MoveCamera(AFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        main_camera.MoveCamera(LEFT, deltaTime);
+        main_camera.MoveCamera(LEFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        main_camera.MoveCamera(RIGHT, deltaTime);
+        main_camera.MoveCamera(RIGHT, time.DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
@@ -247,15 +244,17 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
     lastX = xpos;
     lastY = ypos;
 
+    TimeData time = g_timer.GetData();
     if (main_camera.arcball_mode)
-        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
+        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
     else
         main_camera.RotateCamera(xoffset, yoffset);
 }
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    main_camera.MoveArcballCamera(y_offset, deltaTime);
+    TimeData time = g_timer.GetData();
+    main_camera.MoveArcballCamera(y_offset, time.DeltaTime);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)

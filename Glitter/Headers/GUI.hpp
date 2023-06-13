@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Camera.hpp"
+#include "Timer.hpp"
 
 #include <string>
 #include <glfw/glfw3.h>
@@ -39,7 +40,7 @@ struct SceneSettings
 class GUI
 {
 public:
-    GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings);
+    GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer);
 
     void Init();
 
@@ -54,5 +55,6 @@ private:
     GLFWwindow* p_window;
     Camera& m_camera;
     SceneSettings& m_sceneSettings;
+    Timer& m_timer;
     std::string m_cameraMode;
 };
