@@ -21,7 +21,6 @@ void processKeyboardInput(GLFWwindow* window);
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos);
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-void guiButtonCallback(GUI_BUTTON);
 
 // Input Tracking Globals
 bool spacebar_down = false;
@@ -31,8 +30,8 @@ const unsigned int num_meshes = 5;                          // Total Number of M
 // Hacky way to store 5 meshes right now
 Mesh* meshes[num_meshes];
 
-// Rendering Globals
-SceneSettings g_renderData =
+// Create Render Settings Globals
+static SceneSettings g_renderData =
 {
     { -1.0f, 1.0f, -2.0f }, // default light pos
     { 1.0f, 1.0f, 0.0f },   // default base color
@@ -42,14 +41,13 @@ SceneSettings g_renderData =
     false,                  // default wireframe mode
     false                   // default bone visibility
 };
-
 // Create Camera Object
-Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
-Timer g_timer;
+static Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Create Timer object
+static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
-
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
 float lastY = (float)mHeight / 2.0;
