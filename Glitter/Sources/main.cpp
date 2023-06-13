@@ -1,6 +1,7 @@
 // Local Headers
 #include "glitter.hpp"
 #include "Shader.hpp"
+#include "GUI.hpp"
 #include "Application.hpp"
 
 // System Headers
@@ -13,16 +14,6 @@
 
 #include <Mesh.hpp>
 #include <Camera.hpp>
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_opengl3_loader.h>
-
-enum GUI_BUTTON {
-    MODEL_SWITCH,
-    MODEL_SELECT,
-    CAMERA_MODE_SWITCH
-};
 
 // Input Function Declarations
 void processKeyboardInput(GLFWwindow* window);
@@ -33,20 +24,23 @@ void guiButtonCallback(GUI_BUTTON);
 
 // Input Tracking Globals
 bool spacebar_down = false;
-bool wireframe_mode = false;                                // Wireframe Render Flag
-bool show_bones_flag = false;                               // NOTHING YET!
 unsigned int mesh_index = 0;                                // Current Mesh
 const unsigned int num_meshes = 5;                          // Total Number of Meshes
 
-// Rendering Globals
+// Hacky way to store 5 meshes right now
 Mesh* meshes[num_meshes];
-//glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
-float light_position[3] = { -1.0f, 1.0f - 2.0f };
-float manual_metallic = 0.0f;
-float manual_roughness = 0.2f;
 
-// GUI Globals
-char* camera_mode_string = "Camera Type: Normal Camera";
+// Rendering Globals
+SceneSettings g_renderData =
+{
+    { -1.0f, 1.0f, -2.0f },
+    { 1.0f, 1.0f, 0.0f },
+    { 0.5f, 1.0f, 0.0f },
+    0.0f,
+    0.2f,
+    false,
+    false
+};
 
 // Time Keeping Globals
 float prev_frame_time = 0.0f;
@@ -82,7 +76,7 @@ int main(int argc, char* argv[])
     // Create Context and Load OpenGL Functions
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
-    //fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+    fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
     // Set Callbacks
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
@@ -91,16 +85,6 @@ int main(int argc, char* argv[])
 
     // Hide Cursor and Capture Mouse
     glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Setup GUI
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
 
     // Enable Depth Testing
     glEnable(GL_DEPTH_TEST);
@@ -124,26 +108,25 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
-    defaultShader.use();
-
     // Initialize our application and call its init function
     Application app = Application();
     app.init();
+
+    // Initialize our GUI
+    GUI gui = GUI(mWindow, main_camera, g_renderData);
+    gui.Init();
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
     Mesh mesh1("Assets/suzanne.obj", defaultShader);
     Mesh mesh2("Assets/BASEmodel.fbx", textureShader);
     Mesh mesh3("Assets/test_model.fbx", textureShader);
-    Mesh mesh4("Assets/wiggly.fbx", textureShader);
+    Mesh mesh4("Assets/wiggly.fbx", defaultShader);
 
     meshes[0] = &mesh0;
     meshes[1] = &mesh1;
     meshes[2] = &mesh2;
     meshes[3] = &mesh3;
     meshes[4] = &mesh4;
-
-    float base_color[] = { 1.0f, 1.0f, 0.0f };
-    float light_color[] = { 0.5f, 1.0f, 0.0f };
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -164,17 +147,10 @@ int main(int argc, char* argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Normal/Wireframe Rendering
-        if (wireframe_mode)
+        if (g_renderData.wireframe_mode)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        // GUI Frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        //defaultShader.use();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);        
 
         // Get View and Projection Matrics from Camera
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
@@ -186,33 +162,15 @@ int main(int argc, char* argv[])
             glm::mat4(1.0f),
             projection,
             main_camera.position,
-            glm::vec3(light_position[0], light_position[1], light_position[2]),
-            glm::vec3(base_color[0], base_color[1], base_color[2]),
-            glm::vec3(light_color[0], light_color[1], light_color[2]),
-            manual_metallic,
-            manual_roughness
+            glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
+            glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
+            glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
+            g_renderData.manual_metallic,
+            g_renderData.manual_roughness
         );
 
         // Render GUI
-        ImGui::Begin("Control Window");
-        ImGui::Text("DeltaTime: %f" , deltaTime);
-        ImGui::Text("Use SPACEBAR to enable/disable cursor!");
-        if (ImGui::Button("Switch Model"))
-            guiButtonCallback(MODEL_SWITCH);
-        ImGui::ColorEdit3("Base color", (float*)base_color);
-        ImGui::ColorEdit3("Manual light color", (float*)light_color);
-        ImGui::SliderFloat3("Light position", light_position, -5.0f, 5.0f);
-        ImGui::SliderFloat("Manual metallic", &manual_metallic, 0.0f, 1.0f);
-        ImGui::SliderFloat("Manual roughness", &manual_roughness, 0.0f, 1.0f);
-        ImGui::Checkbox("Toggle wireframe", &wireframe_mode);
-        ImGui::Text(camera_mode_string);
-        if (ImGui::Button("Switch Camera Modes"))
-            guiButtonCallback(CAMERA_MODE_SWITCH);
-        ImGui::Checkbox("Show bones", &show_bones_flag);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        gui.Render();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
@@ -222,13 +180,11 @@ int main(int argc, char* argv[])
     // Teardown application and GLFW
     app.shutdown();
 
+    // Cleanup GUI
+    gui.Cleanup();
+
     defaultShader.cleanup();
     textureShader.cleanup();
-
-    // Clean up GUI
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 
     glfwTerminate();
 
@@ -305,24 +261,4 @@ void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
-}
-
-void guiButtonCallback(GUI_BUTTON button)
-{
-    if (button == MODEL_SWITCH)
-    {
-        mesh_index++;
-        if (mesh_index == num_meshes)
-            mesh_index = 0;
-    }
-
-    else if (button == CAMERA_MODE_SWITCH)
-    {
-        main_camera.arcball_mode = !main_camera.arcball_mode;
-
-        if (main_camera.arcball_mode)
-            camera_mode_string = "Camera Type: Arcball Camera";
-        else
-            camera_mode_string = "Camera Type: Normal Camera";
-    }
 }
