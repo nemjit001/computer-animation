@@ -42,13 +42,25 @@ class GUI
 public:
     GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer);
 
+    /// <summary>
+    /// Initialize our GUI wrapper
+    /// </summary>
     void Init();
 
+    /// <summary>
+    /// Render our GUI with updated reference data
+    /// </summary>
     void Render();
 
+    /// <summary>
+    /// Perform GUI cleanup
+    /// </summary>
     void Cleanup();
 
 private:
+    /// <summary>
+    /// The GUI callback is used to update our reference's state using the GUI_BUTTON enum
+    /// </summary>
     void GuiButtonCallback(GUI_BUTTON button);
 
 private:
