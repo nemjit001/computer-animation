@@ -33,13 +33,13 @@ Mesh* meshes[num_meshes];
 // Rendering Globals
 SceneSettings g_renderData =
 {
-    { -1.0f, 1.0f, -2.0f },
-    { 1.0f, 1.0f, 0.0f },
-    { 0.5f, 1.0f, 0.0f },
-    0.0f,
-    0.2f,
-    false,
-    false
+    { -1.0f, 1.0f, -2.0f }, // default light pos
+    { 1.0f, 1.0f, 0.0f },   // default base color
+    { 0.5f, 1.0f, 0.0f },   // default light color
+    0.0f,                   // default metallic color
+    0.2f,                   // default roughness
+    false,                  // default wireframe mode
+    false                   // default bone visibility
 };
 
 // Time Keeping Globals
