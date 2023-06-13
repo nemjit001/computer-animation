@@ -43,7 +43,7 @@ void GUI::Render()
     ImGui::SliderFloat("Manual metallic", &m_sceneSettings.manual_metallic, 0.0f, 1.0f);
     ImGui::SliderFloat("Manual roughness", &m_sceneSettings.manual_roughness, 0.0f, 1.0f);
     ImGui::Checkbox("Toggle wireframe", &m_sceneSettings.wireframe_mode);
-    ImGui::Text(m_cameraMode.c_str());
+    ImGui::Text("%s", m_cameraMode.c_str());
     if (ImGui::Button("Switch Camera Modes"))
         GuiButtonCallback(GUI_BUTTON::CAMERA_MODE_TOGGLE);
     ImGui::Checkbox("Show bones", &m_sceneSettings.show_bones_flag);

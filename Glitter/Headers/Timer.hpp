@@ -28,7 +28,7 @@ public:
 	/// When this is in a CPP file, the linker screams :(
 	/// </summary>
 	/// <returns></returns>
-	inline TimeData Timer::GetData()
+	inline TimeData GetData()
 	{
 		return m_timeData;
 	}
