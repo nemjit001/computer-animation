@@ -44,7 +44,7 @@ SceneSettings g_renderData =
 };
 
 // Create Camera Object
-Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 Timer g_timer;
 
 // First Mouse Movement Hack
@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
     app.init();
 
     // Initialize our GUI
-    GUI gui = GUI(mWindow, main_camera, g_renderData, g_timer);
+    GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer);
     gui.Init();
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
@@ -148,15 +148,15 @@ int main(int argc, char* argv[])
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);        
 
         // Get View and Projection Matrics from Camera
-        glm::mat4 view = main_camera.GetCurrentViewMatrix();
-        glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
+        glm::mat4 view = g_camera.GetCurrentViewMatrix();
+        glm::mat4 projection = g_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
         // Render Mesh
         meshes[mesh_index]->Render(
             view,
             glm::mat4(1.0f),
             projection,
-            main_camera.position,
+            g_camera.position,
             glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
             glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
             glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
@@ -196,10 +196,10 @@ void processKeyboardInput(GLFWwindow* window)
     // Enable/Disable Camera
     if (spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
     {
-        main_camera.enabled = !main_camera.enabled;
+        g_camera.enabled = !g_camera.enabled;
         
         // Enable/Disable Cursor
-        if (main_camera.enabled)
+        if (g_camera.enabled)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -211,19 +211,19 @@ void processKeyboardInput(GLFWwindow* window)
         spacebar_down = true;
 
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
-    if (main_camera.arcball_mode)
+    if (g_camera.arcball_mode)
         return;
 
     TimeData time = g_timer.GetData();
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        main_camera.MoveCamera(FWD, time.DeltaTime);
+        g_camera.MoveCamera(FWD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        main_camera.MoveCamera(AFT, time.DeltaTime);
+        g_camera.MoveCamera(AFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        main_camera.MoveCamera(LEFT, time.DeltaTime);
+        g_camera.MoveCamera(LEFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        main_camera.MoveCamera(RIGHT, time.DeltaTime);
+        g_camera.MoveCamera(RIGHT, time.DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
@@ -245,16 +245,16 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
     lastY = ypos;
 
     TimeData time = g_timer.GetData();
-    if (main_camera.arcball_mode)
-        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
+    if (g_camera.arcball_mode)
+        g_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
     else
-        main_camera.RotateCamera(xoffset, yoffset);
+        g_camera.RotateCamera(xoffset, yoffset);
 }
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
     TimeData time = g_timer.GetData();
-    main_camera.MoveArcballCamera(y_offset, time.DeltaTime);
+    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
