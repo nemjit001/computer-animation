@@ -4,6 +4,9 @@
 
 #define MAXIMUM_BONES 4 
 
+/// <summary>
+/// Struct containing Vertex information
+/// </summary>
 struct Vertex {
 	glm::vec3 position;		// 3D (local) coordinates of the vertex
 	glm::vec3 normal;		// NOT USED YET ~~~ 3D (local) normal of the vertex, in transformed space
@@ -14,12 +17,18 @@ struct Vertex {
 	float weights[MAXIMUM_BONES];		// NOT USED YET ~~~ The weights of the four bones that influence this vertex
 };
 
+/// <summary>
+/// Struct containing Bone information
+/// </summary>
 struct BoneInfo
 {
 	int id;
 	glm::mat4 offsetMatrix;
 };
 
+/// <summary>
+/// Struct containing Texture information
+/// </summary>
 struct Texture
 {
 	unsigned int id;
