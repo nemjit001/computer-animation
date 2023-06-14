@@ -33,23 +33,22 @@ void GUI::Render()
 
     TimeData time = m_timer.GetData();
     auto& assets = m_loader.Get();
-
-    ImGui::Begin("Control Window");
-    ImGui::Text("DeltaTime: %f", time.DeltaTime);
-    ImGui::Text("Use SPACEBAR to enable/disable cursor!");
-    
     std::string label;
-
+    
     if (m_sceneSettings.active_asset)
         label = m_sceneSettings.active_asset->m_name;
     else
         label = std::string("Please select an asset");
 
+    ImGui::Begin("Control Window");
+    ImGui::Text("DeltaTime: %f", time.DeltaTime);
+    ImGui::Text("Use SPACEBAR to enable/disable cursor!");
+
     if (ImGui::BeginCombo("Models", label.c_str()))
     {
         for (const auto& asset : assets)
         {
-            bool selected = m_sceneSettings.active_asset == asset.get();
+            bool selected = (m_sceneSettings.active_asset == asset.get());
             if (ImGui::Selectable(asset->m_name.c_str(), &selected))
                 m_sceneSettings.active_asset = asset.get();
 
