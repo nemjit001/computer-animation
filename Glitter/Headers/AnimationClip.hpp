@@ -22,17 +22,20 @@ struct AnimationPose {
 
 class AnimationClip {
 public:
-	AnimationClip(std::string nameID, int n_bones, double duration, double ticks_per_second, std::vector<AnimationPose> poseSamples);
+	AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::vector<AnimationPose> poseSamples);
 
 	// TODO: Implement Functions
-	void Evaluate(double time, AnimationPose& tgt_pose);
+	glm::mat4 Evaluate(double time, AnimationPose& tgt_pose);
+	glm::mat4 Evaluate(int frame);
 	void Play();
 	void Pause();
 	void Reset();
+	int GetFrameNum();
 	 
 private:
 	std::string nameID;
 	int n_bones;
+	int max_frames;												// Maximum number of keyframes in a channel
 	double duration;
 	double ticks_per_second;
 	std::vector<AnimationPose> poseSamples;

@@ -22,7 +22,11 @@ public:
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
+	void Animate(int frame);
+	void TraverseNode();
 	Shader getShader();
+	int GetAnimationFrameNum();												// Temp!
+	bool HasAnimations();
 
 private:
 	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);

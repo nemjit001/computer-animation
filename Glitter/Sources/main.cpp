@@ -57,6 +57,7 @@ bool wireframe_mode = false;                                // Wireframe Render 
 bool show_bones_flag = false;                               // NOTHING YET!
 unsigned int mesh_index = 0;                                // Current Mesh
 const unsigned int num_meshes = 4;                          // Total Number of Meshes
+unsigned int animation_index = 0;
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -172,7 +173,11 @@ int main(int argc, char* argv[])
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        //defaultShader.use();
+        // Check whether mesh has animation and evaluate
+        if (meshes[mesh_index]->HasAnimations())
+        {
+            //meshes[mesh_index]->Animate(animation_index);
+        }
 
         // Get View and Projection Matrics from Camera
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
@@ -243,6 +248,12 @@ void processKeyboardInput(GLFWwindow* window)
 
         spacebar_down = false;
     }
+
+    // Scrolling through animation
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) && animation_index < meshes[mesh_index]->GetAnimationFrameNum())
+        animation_index++;
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) && animation_index > 0)
+        animation_index--;
 
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;

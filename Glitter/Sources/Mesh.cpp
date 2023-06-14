@@ -98,7 +98,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glEnableVertexAttribArray(5);   // Bone ids
 
 
-    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
+    glVertexAttribPointer(6, MAXIMUM_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
     glEnableVertexAttribArray(6);  // Bone weights
     glBindVertexArray(0);
     glDeleteBuffers(1, &m_VBO);
@@ -176,12 +176,17 @@ void Mesh::ParseAnimations(const aiScene* scene)
 
             // TODO: Currently considers same size of all channels (realistic?)
             // Parse channels
+            int max_frames = 0;
             std::vector<AnimationPose> poses;
             for (unsigned int j = 0; j < current_animation->mNumChannels; j++)
             {
                 aiNodeAnim* current_channel = current_animation->mChannels[j];
 
                 std::string channel_bone_name = std::string(current_channel->mNodeName.data);           // Get name of affected node
+
+                // Check keyframe number
+                if (current_channel->mNumPositionKeys > max_frames)
+                    max_frames = current_channel->mNumPositionKeys;
 
                 // Parse SQTs of channel
                 std::vector<SQT> sqts;
@@ -204,7 +209,7 @@ void Mesh::ParseAnimations(const aiScene* scene)
                 poses.push_back(new_pose);
             }
 
-            AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), current_animation->mDuration, current_animation->mTicksPerSecond, poses);
+            AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), max_frames, current_animation->mDuration, current_animation->mTicksPerSecond, poses);
             m_animations.push_back(new_animation_clip);
         }
     }
@@ -362,13 +367,7 @@ inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src)
 // Converts aiQuaternion to GLM::quat
 inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src)
 {
-    // TODO: Double check, because GLM uses a weird order of components
-    glm::quat res;
-    res.x = src.x;
-    res.y = src.y;
-    res.z = src.z;
-    res.w = src.w;
-    return res;
+    return glm::quat(src.w, src.x, src.y, src.z);
 }
 
 std::vector<Texture> Mesh::LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName)
@@ -451,7 +450,41 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
+void Mesh::Animate(int frame)
+{
+    // TODO: Switching between animations can be added!
+
+    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
+
+    glm::mat4 I = glm::mat4(1.0f);
+
+    // Loop through bones
+
+    // Get SQT for frame
+    /*glm::
+
+    glm::mat4 s = m_animations[];*/
+}
+
+void Mesh::TraverseNode()
+{
+
+}
+
 Shader Mesh::getShader()
 {
     return shader;
+}
+
+int Mesh::GetAnimationFrameNum()
+{
+    return m_animations[0].GetFrameNum();
+}
+
+bool Mesh::HasAnimations()
+{
+    if (m_animations.empty())
+        return false;
+    else
+        return true;
 }
