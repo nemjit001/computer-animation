@@ -1,7 +1,10 @@
 // Local Headers
 #include "glitter.hpp"
 #include "Shader.hpp"
+#include "Camera.hpp"
+#include "Mesh.hpp"
 #include "Timer.hpp"
+#include "AssetLoader.hpp"
 #include "GUI.hpp"
 #include "Application.hpp"
 
@@ -12,9 +15,7 @@
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
-
-#include <Mesh.hpp>
-#include <Camera.hpp>
+#include <iostream>
 
 // Input Function Declarations
 void processKeyboardInput(GLFWwindow* window);
@@ -24,11 +25,6 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
 // Input Tracking Globals
 bool spacebar_down = false;
-unsigned int mesh_index = 0;                                // Current Mesh
-const unsigned int num_meshes = 5;                          // Total Number of Meshes
-
-// Hacky way to store 5 meshes right now
-Mesh* meshes[num_meshes];
 
 // Create Render Settings Globals
 static SceneSettings g_renderData =
@@ -39,7 +35,8 @@ static SceneSettings g_renderData =
     0.0f,                   // default metallic color
     0.2f,                   // default roughness
     false,                  // default wireframe mode
-    false                   // default bone visibility
+    false,                  // default bone visibility,
+    nullptr                 // no active asset at first
 };
 // Create Camera Object
 static Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -108,21 +105,14 @@ int main(int argc, char* argv[])
     Application app = Application();
     app.init();
 
+    // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
+    AssetLoader assetLoader = AssetLoader();
+    assetLoader.Load("Assets/*.fbx", defaultShader);
+    assetLoader.Load("Assets/*.obj", defaultShader);
+
     // Initialize our GUI
-    GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer);
+    GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer, assetLoader);
     gui.Init();
-
-    Mesh mesh0("Assets/cube.obj", defaultShader);
-    Mesh mesh1("Assets/suzanne.obj", defaultShader);
-    Mesh mesh2("Assets/BASEmodel.fbx", textureShader);
-    Mesh mesh3("Assets/test_model.fbx", textureShader);
-    Mesh mesh4("Assets/wiggly.fbx", defaultShader);
-
-    meshes[0] = &mesh0;
-    meshes[1] = &mesh1;
-    meshes[2] = &mesh2;
-    meshes[3] = &mesh3;
-    meshes[4] = &mesh4;
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -150,17 +140,20 @@ int main(int argc, char* argv[])
         glm::mat4 projection = g_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
         // Render Mesh
-        meshes[mesh_index]->Render(
-            view,
-            glm::mat4(1.0f),
-            projection,
-            g_camera.position,
-            glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
-            glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
-            glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
-            g_renderData.manual_metallic,
-            g_renderData.manual_roughness
-        );
+        if (g_renderData.active_asset)
+        {
+            g_renderData.active_asset->m_mesh->Render(
+                view,
+                glm::mat4(1.0f),
+                projection,
+                g_camera.position,
+                glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
+                glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
+                glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
+                g_renderData.manual_metallic,
+                g_renderData.manual_roughness
+            );
+        }
 
         // Render GUI
         gui.Render();

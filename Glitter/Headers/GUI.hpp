@@ -2,6 +2,7 @@
 
 #include "Camera.hpp"
 #include "Timer.hpp"
+#include "AssetLoader.hpp"
 
 #include <string>
 #include <GLFW/glfw3.h>
@@ -32,6 +33,7 @@ struct SceneSettings
     float manual_roughness;
     bool wireframe_mode;
     bool show_bones_flag;
+    Asset* active_asset;
 };
 
 /// <summary>
@@ -40,7 +42,7 @@ struct SceneSettings
 class GUI
 {
 public:
-    GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer);
+    GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer, AssetLoader& loader);
 
     /// <summary>
     /// Initialize our GUI wrapper
@@ -68,5 +70,6 @@ private:
     Camera& m_camera;
     SceneSettings& m_sceneSettings;
     Timer& m_timer;
+    AssetLoader& m_loader;
     std::string m_cameraMode;
 };

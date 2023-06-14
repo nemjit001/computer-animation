@@ -1,11 +1,12 @@
 #include "GUI.hpp"
 
-GUI::GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer)
+GUI::GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Timer& timer, AssetLoader& loader)
     :
     p_window(pWindow),
     m_camera(camera),
     m_sceneSettings(sceneSettings),
     m_timer(timer),
+    m_loader(loader),
     m_cameraMode("Camera Type: Normal Camera")
 {
     //
@@ -31,12 +32,34 @@ void GUI::Render()
     ImGui::NewFrame();
 
     TimeData time = m_timer.GetData();
+    auto& assets = m_loader.Get();
 
     ImGui::Begin("Control Window");
     ImGui::Text("DeltaTime: %f", time.DeltaTime);
     ImGui::Text("Use SPACEBAR to enable/disable cursor!");
-    if (ImGui::Button("Switch Model"))
-        GuiButtonCallback(GUI_BUTTON::MODEL_TOGGLE);
+    
+    std::string label;
+
+    if (m_sceneSettings.active_asset)
+        label = m_sceneSettings.active_asset->m_name;
+    else
+        label = std::string("Please select an asset");
+
+    if (ImGui::BeginCombo("Models", label.c_str()))
+    {
+        for (const auto& asset : assets)
+        {
+            bool selected = m_sceneSettings.active_asset == asset.get();
+            if (ImGui::Selectable(asset->m_name.c_str(), &selected))
+                m_sceneSettings.active_asset = asset.get();
+
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+
+        ImGui::EndCombo();
+    }
+
     ImGui::ColorEdit3("Base color", (float*)m_sceneSettings.base_color);
     ImGui::ColorEdit3("Manual light color", (float*)m_sceneSettings.light_color);
     ImGui::SliderFloat3("Light position", m_sceneSettings.light_position, -5.0f, 5.0f);
