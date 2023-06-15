@@ -7,10 +7,6 @@ in vec2 TexCoords;
 
 out vec4 outColor;
 
-uniform sampler2D DiffuseMap;
-uniform sampler2D SpecularMap;
-uniform sampler2D NormalMap;
-
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;
