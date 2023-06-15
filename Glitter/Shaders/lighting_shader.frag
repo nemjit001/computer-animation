@@ -4,7 +4,6 @@ in vec3 WorldPos;
 in vec3 Normal;
 in vec3 Tangent;
 in vec2 TexCoords;
-in vec3 Tangent;
 
 out vec4 outColor;
 
