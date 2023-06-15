@@ -6,6 +6,8 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec2 texCoords;
+layout(location = 3) in vec3 tangent;
+layout(location = 4) in vec3 biTangent;
 layout(location = 5) in ivec4 boneIDs;      // Size of 4 is in accordance with the 4 bone per vertex convention
 layout(location = 6) in vec4 boneWeights;
 
@@ -25,10 +27,10 @@ void main()
     vec4 new_position;
 
     // Loop between 4 bones for position
-    mat4 finalBoneTransform = boneTransforms[boneIDs[0]] * boneWeights[0];
-    finalBoneTransform += boneTransforms[boneIDs[1]] * boneWeights[1];
-    finalBoneTransform += boneTransforms[boneIDs[2]] * boneWeights[2];
-    finalBoneTransform += boneTransforms[boneIDs[3]] * boneWeights[3];
+    mat4 finalBoneTransform = boneTransforms[boneIDs.x] * boneWeights.x;
+    finalBoneTransform += boneTransforms[boneIDs.y] * boneWeights.y;
+    finalBoneTransform += boneTransforms[boneIDs.z] * boneWeights.z;
+    finalBoneTransform += boneTransforms[boneIDs.w] * boneWeights.w;
 
     // Calculate final vertex position
     new_position = finalBoneTransform * vec4(position, 1.0);

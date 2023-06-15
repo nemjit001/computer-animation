@@ -55,7 +55,7 @@ Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 bool spacebar_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
-unsigned int mesh_index = 0;                                // Current Mesh
+unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 4;                          // Total Number of Meshes
 unsigned int animation_index = 0;
 
@@ -125,6 +125,15 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    // create and link bone shader
+    Shader boneShader = Shader();
+    boneShader.init();
+
+    boneShader
+        .registerShader("Shaders/bone_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
     defaultShader.use();
 
     // Initialize our application and call its init function
@@ -132,8 +141,8 @@ int main(int argc, char* argv[])
     app.init();
 
     Mesh mesh0("Assets/cube.obj", defaultShader);
-    Mesh mesh1("Assets/suzanne.obj", defaultShader);
-    Mesh mesh2("Assets/BASEmodel.fbx", textureShader);
+    Mesh mesh1("Assets/BASEmodel.fbx", boneShader);
+    Mesh mesh2("Assets/bob_lamp.fbx", boneShader);
     Mesh mesh3("Assets/test_model.fbx", textureShader);
 
     meshes[0] = &mesh0;
@@ -176,7 +185,7 @@ int main(int argc, char* argv[])
         // Check whether mesh has animation and evaluate
         if (meshes[mesh_index]->HasAnimations())
         {
-            //meshes[mesh_index]->Animate(animation_index);
+            meshes[mesh_index]->Animate(animation_index);
         }
 
         // Get View and Projection Matrics from Camera
@@ -189,6 +198,7 @@ int main(int argc, char* argv[])
         // Render GUI
         ImGui::Begin("Control Window");
         ImGui::Text("DeltaTime: %f" , deltaTime);
+        ImGui::Text("Animation Frame: %d", animation_index);
         ImGui::Text("Use SPACEBAR to enable/disable cursor!");
         if (ImGui::Button("Switch Model"))
             guiButtonCallback(MODEL_SWITCH);
@@ -250,9 +260,9 @@ void processKeyboardInput(GLFWwindow* window)
     }
 
     // Scrolling through animation
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) && animation_index < meshes[mesh_index]->GetAnimationFrameNum())
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
         animation_index++;
-    else if (glfwGetKey(window, GLFW_KEY_LEFT) && animation_index > 0)
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
         animation_index--;
 
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)

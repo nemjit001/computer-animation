@@ -5,6 +5,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <string>
 #include <vector>
+#include <map>
 
 struct SQT {
 	double time;				// Time of Keyframe
@@ -22,7 +23,11 @@ struct AnimationPose {
 
 class AnimationClip {
 public:
-	AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::vector<AnimationPose> poseSamples);
+	double duration;
+	double ticks_per_second;
+	std::map<std::string, AnimationPose> poseSamples;
+
+	AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::map<std::string, AnimationPose > poseSamples);
 
 	// TODO: Implement Functions
 	glm::mat4 Evaluate(double time, AnimationPose& tgt_pose);
@@ -36,7 +41,4 @@ private:
 	std::string nameID;
 	int n_bones;
 	int max_frames;												// Maximum number of keyframes in a channel
-	double duration;
-	double ticks_per_second;
-	std::vector<AnimationPose> poseSamples;
 };

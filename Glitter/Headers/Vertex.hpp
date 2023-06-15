@@ -5,19 +5,21 @@
 #define MAXIMUM_BONES 4 
 
 struct Vertex {
-	glm::vec3 position;		// 3D (local) coordinates of the vertex
-	glm::vec3 normal;		// NOT USED YET ~~~ 3D (local) normal of the vertex, in transformed space
-	glm::vec2 texCoords;	// NOT USED YET ~~~ 2D coordinates in the texture. Ranges from 0 to 1. (0, 0) is the bottom left, (1, 1) is the top right)
-	glm::vec3 tangent;		// NOT USED YET ~~~ 
-	glm::vec3 biTangent;	// NOT USED YET ~~~ 
-	int boneIDs[MAXIMUM_BONES];		// NOT USED YET ~~~ IDs of the four bones that influence this vertex
-	float weights[MAXIMUM_BONES];		// NOT USED YET ~~~ The weights of the four bones that influence this vertex
+	glm::vec3 position;							// 3D (local) coordinates of the vertex
+	glm::vec3 normal;							// 3D (local) normal of the vertex, in transformed space
+	glm::vec2 texCoords;						// 2D coordinates in the texture. Ranges from 0 to 1. (0, 0) is the bottom left, (1, 1) is the top right)
+	glm::vec3 tangent;							// NOT USED YET ~~~ 
+	glm::vec3 biTangent;						// NOT USED YET ~~~
+	unsigned int bone_num = 0;					// Number of bones affecting the vertex. Used to add bone IDs and weights properly
+	int boneIDs[MAXIMUM_BONES] = { 0 };			// Initialized to zeros
+	float weights[MAXIMUM_BONES] = { 0.0f };	// Initialized to zeros
 };
 
 struct BoneInfo
 {
 	int id;
 	glm::mat4 offsetMatrix;
+	glm::mat4 bone_transform = glm::mat4(0.0f);
 };
 
 struct Texture

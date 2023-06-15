@@ -1,6 +1,6 @@
 #include <AnimationClip.hpp>
 
-AnimationClip::AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::vector<AnimationPose> poseSamples)
+AnimationClip::AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::map<std::string, AnimationPose> poseSamples)
 {
 	this->nameID = nameID;
 	this->n_bones = n_bones;

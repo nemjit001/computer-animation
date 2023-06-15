@@ -23,7 +23,7 @@ public:
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
 	void Animate(int frame);
-	void TraverseNode();
+	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
@@ -46,10 +46,14 @@ private:
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
 	std::vector<Texture> m_textures;
-	std::map<std::string, BoneInfo> m_bones;
+	std::map<std::string, int> bone_map;										// Map connects node - bone names to indices in m_bones vector
+	std::vector<BoneInfo> m_bones;												// Is indexed by the indices in bone_map
 	std::vector<AnimationClip> m_animations;
 	std::string dir;
+	Assimp::Importer importer;
+	const aiScene* scene;
 	int m_boneCounter = 0;
+	glm::mat4 inverse_transform;
 	Shader shader;
 	std::vector<std::unique_ptr<Mesh>> m_subMeshes;
 

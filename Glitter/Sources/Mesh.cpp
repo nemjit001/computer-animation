@@ -3,9 +3,9 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
-// TODO: Issue with .fbx files, where aiProcess_PreTranformVertices allows proper texture mapping and rendering, but gets rid of bone and animation data
 //#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords | aiProcess_PreTransformVertices)
 #define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals |  aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords)
 
@@ -25,7 +25,7 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     Mesh()
 {
     this->shader = shader;
-    Assimp::Importer importer;
+    //Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(
         filename,
         SCENE_LOAD_FLAGS
@@ -39,6 +39,12 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     {
         dir = filename.substr(0, filename.find_last_of('/'));
         Parse(scene->mRootNode, scene);
+
+        // Set root node
+        this->scene = scene;
+
+        // Set Inverse Transform Matrix (not needed if we stick to single mesh models)
+        inverse_transform = glm::inverse(ConvertMatrixToGLMFormat(scene->mRootNode->mTransformation));
 
         // Parse animations
         ParseAnimations(scene);
@@ -177,7 +183,7 @@ void Mesh::ParseAnimations(const aiScene* scene)
             // TODO: Currently considers same size of all channels (realistic?)
             // Parse channels
             int max_frames = 0;
-            std::vector<AnimationPose> poses;
+            std::map<std::string, AnimationPose> poses;
             for (unsigned int j = 0; j < current_animation->mNumChannels; j++)
             {
                 aiNodeAnim* current_channel = current_animation->mChannels[j];
@@ -205,8 +211,8 @@ void Mesh::ParseAnimations(const aiScene* scene)
                 new_pose.bone_name = channel_bone_name;
                 new_pose.bonePoses = sqts;
 
-                // Add AnimationPose
-                poses.push_back(new_pose);
+                // Add AnimationPose to map
+                poses.insert({channel_bone_name, new_pose});
             }
 
             AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), max_frames, current_animation->mDuration, current_animation->mTicksPerSecond, poses);
@@ -280,7 +286,7 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     ExtractBoneWeightForVertices(this->m_vertices, mesh, scene);
 
     m_subMeshes.push_back(
-        std::unique_ptr<Mesh>(new Mesh(vertices, indices, textures, shader))
+        std::unique_ptr<Mesh>(new Mesh(this->m_vertices, this->m_indices, this->m_textures, shader))
     );
 }
 
@@ -295,7 +301,7 @@ void Mesh::SetBoneToDefault(Vertex& vertex)
 
 void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene)
 {
-    auto& boneInfoMap = m_bones;
+    auto& boneInfoMap = bone_map;
     int& boneCount = m_boneCounter;
 
     std::cout << "Found " << mesh->mNumBones << " Bones in Mesh " << mesh->mName.C_Str() << std::endl;
@@ -309,18 +315,21 @@ void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiM
             BoneInfo newBoneInfo;
             newBoneInfo.id = boneCount;
             newBoneInfo.offsetMatrix = ConvertMatrixToGLMFormat(mesh->mBones[boneIndex]->mOffsetMatrix);
-            boneInfoMap[boneName] = newBoneInfo;
+            //boneInfoMap[boneName] = boneCount;
+            boneInfoMap.insert({ boneName, boneCount });
+            m_bones.push_back(newBoneInfo);
             boneId = boneCount;
             boneCount++;
         }
         else
         {
-            boneId = boneInfoMap[boneName].id;
+            //boneId = boneInfoMap[boneName];
+            boneId = boneInfoMap.find(boneName)->second;
         }
         assert(boneId != -1);
         auto weights = mesh->mBones[boneIndex]->mWeights;
         int numWeights = mesh->mBones[boneIndex]->mNumWeights;
-        for (int weightIndex = 0; weightIndex < numWeights; ++weightIndex)
+        for (int weightIndex = 0; weightIndex < numWeights; weightIndex++)
         {
             int vertexId = weights[weightIndex].mVertexId;
             float weight = weights[weightIndex].mWeight;
@@ -332,36 +341,32 @@ void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiM
 
 void Mesh::SetVertexBoneData(Vertex& vertex, int boneId, float weight)
 {
-    for (int i = 0; i < MAXIMUM_BONES; ++i)
+    unsigned int bone_number = vertex.bone_num;                     // The array index where the bone will be added
+
+    if (bone_number > 3)
     {
-        if (vertex.boneIDs[i] < 0)
-        {
-            vertex.boneIDs[i] = boneId;
-            vertex.weights[i] = weight;
-            break;
-        }
+        std::cout << "ERROR::Exceeded MAX_BONES!" << std::endl;
+
+        return;
     }
+
+    // Add Bone ID and Weight
+    vertex.boneIDs[bone_number] = boneId;
+    vertex.weights[bone_number] = weight;
+
+    // Increment Bone Number in vertex
+    vertex.bone_num++;
 }
 
 inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from)
 {
-    glm::mat4 to;
-    //the a,b,c,d in assimp is the row ; the 1,2,3,4 is the column
-    to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
-    to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
-    to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
-    to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
-    return to;
+    return glm::transpose(glm::make_mat4(&from.a1));
 }
 
 // Converts aiVector3D to GLM::vec3
 inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src)
 {
-    glm::vec3 res;
-    res.x = src.x;
-    res.y = src.y;
-    res.z = src.z;
-    return res;
+    return glm::vec3(src.x, src.y, src.z);
 }
 
 // Converts aiQuaternion to GLM::quat
@@ -456,19 +461,63 @@ void Mesh::Animate(int frame)
 
     std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
 
-    glm::mat4 I = glm::mat4(1.0f);
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
 
-    // Loop through bones
+    // Traverse nodes from root node
+    TraverseNode(frame, scene->mRootNode, initial_matrix);
 
-    // Get SQT for frame
-    /*glm::
+    bone_transforms.resize(m_boneCounter);
 
-    glm::mat4 s = m_animations[];*/
+    // Traverse updated bones
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        bone_transforms[i] = m_bones[i].bone_transform;
+    }
+
+    shader.use();
+
+    // Write bone transforms to vertex shader
+    shader.setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::TraverseNode()
+void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform)
 {
+    std::string node_name(std::string(node->mName.data));
+    glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
 
+    // Get SQT
+    SQT sqt;
+    auto sqt_it = m_animations.back().poseSamples.find(node_name);
+    if (sqt_it != m_animations.back().poseSamples.end())
+    {
+        // Check if keyframe exists
+        if (frame < sqt_it->second.bonePoses.size())
+        {
+            sqt = sqt_it->second.bonePoses[frame];
+
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), sqt.scale);
+            glm::mat4 rotation_matrix = glm::toMat4(sqt.rotation);
+            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), sqt.translation);
+
+            node_transform = translation_matrix * rotation_matrix * scale_matrix;
+        }
+    }
+
+    // Combine with parent
+    glm::mat4 global_transformation = parent_transform * node_transform;
+
+    // Get Bone
+    auto bone_it = bone_map.find(node_name);
+    if (bone_it != bone_map.end())
+    {
+        m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+    }
+
+    // Recursion to traverse all nodes
+    for (int i = 0; i < node->mNumChildren; i++)
+    {
+        TraverseNode(frame, node->mChildren[i], global_transformation);
+    }
 }
 
 Shader Mesh::getShader()
@@ -478,7 +527,7 @@ Shader Mesh::getShader()
 
 int Mesh::GetAnimationFrameNum()
 {
-    return m_animations[0].GetFrameNum();
+    return m_animations.back().GetFrameNum();
 }
 
 bool Mesh::HasAnimations()

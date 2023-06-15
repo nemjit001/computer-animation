@@ -5,6 +5,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
 
 /// <summary>
 /// The Shader class can be used to register shader files for rendering,
@@ -40,6 +41,7 @@ public:
     void setFloat(const std::string& name, float value) const;
     void setMat4(const std::string& name, glm::mat4 mat) const;
     void setVec3(const std::string& name, glm::vec3 vec) const;
+    void setMat4Vector(const std::string& name, std::vector<glm::mat4> mat_vec) const;
 
     /// <summary>
     /// Register a shader file and associated shader type to the shader program
