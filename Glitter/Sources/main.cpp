@@ -321,6 +321,7 @@ void guiButtonCallback(GUI_BUTTON button)
     if (button == MODEL_SWITCH)
     {
         mesh_index++;
+        animation_index = 0;            // Reset animation frame index
         if (mesh_index == num_meshes)
             mesh_index = 0;
     }

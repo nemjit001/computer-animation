@@ -8,7 +8,7 @@
 #include <map>
 
 struct SQT {
-	double time;				// Time of Keyframe
+	double time;					// Time of Keyframe
 
 	// Keyframe Data
 	glm::vec3 scale;
@@ -17,15 +17,15 @@ struct SQT {
 };
 
 struct AnimationPose {
-	std::vector<SQT> bonePoses;
-	std::string bone_name;
+	std::vector<SQT> bonePoses;		// SQTs for each keyframe
+	std::string bone_name;			// Name of bone
 };
 
 class AnimationClip {
 public:
-	double duration;
-	double ticks_per_second;
-	std::map<std::string, AnimationPose> poseSamples;
+	double duration;									// Animation duration
+	double ticks_per_second;							// Ticks per second
+	std::map<std::string, AnimationPose> poseSamples;	// Map from bone name to AnimationPose
 
 	AnimationClip(std::string nameID, int n_bones, int max_frames, double duration, double ticks_per_second, std::map<std::string, AnimationPose > poseSamples);
 
@@ -38,7 +38,7 @@ public:
 	int GetFrameNum();
 	 
 private:
-	std::string nameID;
-	int n_bones;
+	std::string nameID;											// Name of animation (currently not used)
+	int n_bones;												// Number of bones in animation
 	int max_frames;												// Maximum number of keyframes in a channel
 };

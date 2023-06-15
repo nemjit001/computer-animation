@@ -17,14 +17,14 @@ struct Vertex {
 
 struct BoneInfo
 {
-	int id;
-	glm::mat4 offsetMatrix;
-	glm::mat4 bone_transform = glm::mat4(0.0f);
+	int id;										// Bone ID index
+	glm::mat4 offsetMatrix;						// Offset matrix for bone space
+	glm::mat4 bone_transform = glm::mat4(0.0f);	// Final bone tranformation matrix
 };
 
 struct Texture
 {
-	unsigned int id;
-	std::string type;
-	std::string path;
+	unsigned int id;							// Texture ID
+	std::string type;							// Type of texture (diffuse, normal, specular, height)
+	std::string path;							// Expected path of texture
 };

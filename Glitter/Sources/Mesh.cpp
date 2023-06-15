@@ -290,15 +290,6 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     );
 }
 
-void Mesh::SetBoneToDefault(Vertex& vertex)
-{
-    for (int i = 0; i < MAXIMUM_BONES; i++)
-    {
-        vertex.boneIDs[i] = -1;
-        vertex.weights[i] = 0.0f;
-    }
-}
-
 void Mesh::ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene)
 {
     auto& boneInfoMap = bone_map;
