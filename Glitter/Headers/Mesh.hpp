@@ -21,7 +21,7 @@ public:
 	Mesh();
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
-	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
+	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	void Animate(int frame);
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 	Shader getShader();

@@ -2,9 +2,15 @@
 
 in vec3 WorldPos;
 in vec3 Normal;
+in vec3 Tangent;
 in vec2 TexCoords;
+in vec3 Tangent;
 
 out vec4 outColor;
+
+uniform sampler2D DiffuseMap;
+uniform sampler2D SpecularMap;
+uniform sampler2D NormalMap;
 
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
@@ -17,6 +23,7 @@ uniform float ManualMetallic;
 uniform float ManualRoughness;
 uniform sampler2D DiffuseTexture;
 uniform sampler2D SpecularTexture;
+uniform sampler2D NormalTexture;
 
 float PI = 3.14159265359;
 
@@ -60,11 +67,20 @@ void main()
     float metallic = ManualMetallic; 
     float roughness = ManualRoughness; 
 //    vec3 albedo = BaseColor;       //determines the colour
-    vec3 albedo = mix(texture(DiffuseTexture, TexCoords).rgb, BaseColor, 0.1f);       //determines the colour
+    vec3 albedo = texture(DiffuseTexture, TexCoords).rgb * BaseColor;      //determines the colour
+    vec3 specular = texture(SpecularTexture, TexCoords).rgb;
+    vec3 diffuse = texture(DiffuseMap, TexCoords).rgb;
     //vec3 LightPosition = vec3(10.0f, 10.0f, 10.0f);      //TODO: change with correct calculations and do a for loop
     vec3 LightColor = ManualLightColor;
-    vec3 N = normalize(Normal);
+    //vec3 N = normalize(Normal);
+    vec3 T = normalize(tangent - dot(tangent, N) * N);
+    vec3 B = cross(N, T);
     vec3 V = normalize(CamPos - WorldPos);
+
+    mat3 TBN = mat3(Tangent, cross(Normal, Tangent), Normal);
+    vec3 normalMap = texture(NormalMap, TexCoords).rgb;
+    normalMap = normalize(normalMap * 2.0 - 1.0);
+    N = normalize(TBN * normalMap);
 
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, albedo, metallic);
@@ -80,25 +96,29 @@ void main()
     vec3 radiance     = LightColor * attenuation;        
         
     // cook-torrance brdf
-    float NDF = DistributionGGX(N, H, roughness);        
-    float G   = GeometrySmith(N, V, L, roughness);      
+    float NDF = DistributionGGX(N, H, roughness);
+    float G = GeometrySmith(N, V, L, roughness);      
     vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0);       
         
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;	  
         
-    vec3 numerator    = NDF * G * F;
+    vec3 numerator = NDF * G * F;
     float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001;
-    vec3 specular     = numerator / denominator;  
-    specular *= texture(SpecularTexture, TexCoords).rgb;
+    vec3 specular = numerator / denominator;
+    specular *= specularMap;
+
+    vec3 diffuse = kD * albedo * radiance * NdotL;
+
+    vec3 specular = kS * specular * radiance * NdotL;
             
     // add to outgoing radiance Lo
     float NdotL = max(dot(N, L), 0.0);                
     Lo += (kD * albedo / PI + specular) * radiance * NdotL; 
     
     vec3 ambient = vec3(0.03) * albedo;
-    vec3 color = ambient + Lo;
+    vec3 color = ambient  + diffuse + specular;
 	
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0/2.2));  

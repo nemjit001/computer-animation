@@ -116,14 +116,14 @@ Mesh::~Mesh()
     glDeleteVertexArrays(1, &m_VAO);
 }
 
-void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness)
+void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness, GLuint texture_diffuse, GLuint texture_normal, GLuint texture_specular)
 {
     // Use shader
     shader.use();
 
     // Pass uniforms
     shader.setMat4("viewMatrix", view);
-    shader.setMat4("modelMatrix", glm::mat4(1.0f));
+    shader.setMat4("modelMatrix", model);
     shader.setMat4("projectionMatrix", projection);
     shader.setVec3("CamPos", cam_pos);
     shader.setVec3("LightPosition", light_pos);
@@ -131,9 +131,13 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
     shader.setVec3("ManualLightColor", manual_light_color);
     shader.setFloat("ManualMetallic", manual_metallic);
     shader.setFloat("ManualRoughness", manual_roughness);
+    shader.setInt("DiffuseTexture", 0);
+    shader.setInt("NormalTexture", 1);
+    shader.setInt("SpecularTexture", 2);
+
 
     for (auto& mesh : m_subMeshes)
-        mesh->Render(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness);
+        mesh->Render(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness, texture_diffuse, texture_normal, texture_specular);
 
     // bind appropriate textures
     unsigned int diffuseNr = 1;

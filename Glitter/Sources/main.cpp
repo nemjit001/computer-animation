@@ -192,9 +192,13 @@ int main(int argc, char* argv[])
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
         glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
-        // Render Mesh
-        meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
+        GLuint texture_diffuseID = 0;
+        GLuint texture_normalID = 1;
+        GLuint texture_specularID = 2;
 
+        // Render Mesh
+        meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness, texture_diffuseID, texture_normalID, texture_specularID);
+        
         // Render GUI
         ImGui::Begin("Control Window");
         ImGui::Text("DeltaTime: %f" , deltaTime);
