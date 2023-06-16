@@ -63,7 +63,6 @@ void main()
     float metallic = ManualMetallic;
     float roughness = ManualRoughness;
     vec3 albedo = texture(DiffuseTexture, TexCoords).rgb * BaseColor; // Determines the color
-    vec3 specular = texture(SpecularTexture, TexCoords).rgb;
     vec3 LightColor = ManualLightColor;
     vec3 N = normalize(texture(NormalTexture, TexCoords).rgb * 2.0 - 1.0); // Use NormalTexture for normal calculation
     vec3 T = normalize(Tangent - dot(Tangent, N) * N);
@@ -100,8 +99,12 @@ void main()
 
     vec3 diffuseComponent = kD * albedo * radiance * max(dot(N, L), 0.0);
 
+    // Apply specular reflections
+    vec3 specularMap = texture(SpecularTexture, TexCoords).rgb;
+    vec3 specularReflection = specularMap * specularComponent;
+
     // Add to outgoing radiance Lo
-    Lo += (diffuseComponent + specularComponent);
+    Lo += (diffuseComponent + specularReflection);
 
     vec3 ambient = vec3(0.03) * albedo;
     vec3 color = ambient + Lo;
