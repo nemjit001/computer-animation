@@ -280,6 +280,10 @@ void processKeyboardInput(GLFWwindow* window)
         main_camera.MoveCamera(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         main_camera.MoveCamera(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        main_camera.MoveCamera(UPWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        main_camera.MoveCamera(DOWNWARD, deltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)

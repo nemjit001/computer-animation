@@ -9,7 +9,9 @@ enum Movement_Direction {
 	FWD,
 	AFT,
 	LEFT,
-	RIGHT
+	RIGHT,
+	UPWARD,
+	DOWNWARD
 };
 
 // Constraints and Defaults

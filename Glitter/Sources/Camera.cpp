@@ -49,6 +49,10 @@ void Camera::MoveCamera(Movement_Direction direction, float deltaTime)
 		position -= right * smooth_speed;
 	else if (direction == RIGHT)
 		position += right * smooth_speed;
+	else if (direction == UPWARD)
+		position += world_up * smooth_speed;
+	else if (direction == DOWNWARD)
+		position -= world_up * smooth_speed;
 }
 
 void Camera::MoveArcballCamera(float y_offset, float deltaTime)
