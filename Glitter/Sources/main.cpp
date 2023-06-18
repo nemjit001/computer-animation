@@ -13,6 +13,7 @@
 
 #include <Mesh.hpp>
 #include <Camera.hpp>
+#include <Skybox.hpp>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -55,6 +56,7 @@ Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 bool spacebar_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
+bool show_skybox = true;                                    // Render Skybox Flag
 unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 4;                          // Total Number of Meshes
 unsigned int animation_index = 0;
@@ -134,12 +136,25 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    // create and link skybox shader
+    Shader skyboxShader = Shader();
+    skyboxShader.init();
+
+    skyboxShader
+        .registerShader("Shaders/skybox.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/skybox.frag", GL_FRAGMENT_SHADER)
+        .link();
+
     defaultShader.use();
 
     // Initialize our application and call its init function
     Application app = Application();
     app.init();
 
+    // Create Skybox
+    Skybox skybox("Assets/Yokohama3/", skyboxShader);
+
+    // Create Meshes
     Mesh mesh0("Assets/cube.obj", defaultShader);
     Mesh mesh1("Assets/BASEmodel.fbx", boneShader);
     Mesh mesh2("Assets/bob_lamp.fbx", boneShader);
@@ -195,6 +210,10 @@ int main(int argc, char* argv[])
         // Render Mesh
         meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
 
+        // Render Skybox
+        if (show_skybox)
+            skybox.Render(view, projection);
+
         // Render GUI
         ImGui::Begin("Control Window");
         ImGui::Text("DeltaTime: %f" , deltaTime);
@@ -211,6 +230,7 @@ int main(int argc, char* argv[])
         ImGui::Text(camera_mode_string);
         if (ImGui::Button("Switch Camera Modes"))
             guiButtonCallback(CAMERA_MODE_SWITCH);
+        ImGui::Checkbox("Toggle Skybox", &show_skybox);
         ImGui::Checkbox("Show bones", &show_bones_flag);
         ImGui::End();
 
