@@ -247,6 +247,8 @@ int main(int argc, char* argv[])
 
     defaultShader.cleanup();
     textureShader.cleanup();
+    boneShader.cleanup();
+    skyboxShader.cleanup();
 
     // Clean up GUI
     ImGui_ImplOpenGL3_Shutdown();
