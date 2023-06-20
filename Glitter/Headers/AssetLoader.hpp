@@ -3,12 +3,9 @@
 #include "Shader.hpp"
 #include "Mesh.hpp"
 
-#include <stdexcept>
-// XXX: I know this is a raw c header, needed for glob operations because it's not in the stl
-extern "C" {
-    #include <glob.h>
-}
-
+/// <summary>
+/// Asset representation with name and mesh data
+/// </summary>
 struct Asset
 {
     std::string m_name;
@@ -18,39 +15,23 @@ struct Asset
 class AssetLoader
 {
 public:
-    AssetLoader()
-        :
-        m_assets()
-    {
-        // 
-    }
+    /// <summary>
+    /// Asset Loader that contains a list of found assets (using the Load function to add assets by pattern)
+    /// </summary>
+    AssetLoader();
 
-    void Load(std::string const& expr, Shader const& shader)
-    {
-        glob_t globResult = {};
-        int ret = glob(expr.c_str(), GLOB_TILDE, NULL, &globResult);
-        if (ret != 0)
-        {
-            globfree(&globResult);
-            throw std::runtime_error("Failed to glob input expression");
-        }
+    /// <summary>
+    /// Load an asset with its shader using an expression.
+    /// </summary>
+    /// <param name="expr">Expr to search for, can contain wildcard characters</param>
+    /// <param name="shader">Shader to use with Asset</param>
+    void Load(std::string const& expr, Shader const& shader);
 
-        for (size_t i = 0; i < globResult.gl_pathc; i++)
-        {
-            Asset* pAsset = new Asset {
-                std::string(globResult.gl_pathv[i]),
-                std::unique_ptr<Mesh>(new Mesh(globResult.gl_pathv[i], shader))            
-            };
-
-            m_assets.push_back(
-                std::unique_ptr<Asset>(pAsset)
-            );
-        }
-
-        globfree(&globResult);
-    }
-
-    std::vector<std::unique_ptr<Asset>> const& Get()
+    /// <summary>
+    /// Get the list of loaded assets
+    /// </summary>
+    /// <returns>A vector containing all loaded assets</returns>
+    inline std::vector<std::unique_ptr<Asset>> const& Get()
     {
         return m_assets;
     }
