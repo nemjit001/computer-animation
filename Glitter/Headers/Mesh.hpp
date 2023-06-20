@@ -43,6 +43,7 @@ private:
 	inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src);
 	inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src);
 
+
 	std::vector<Vertex> m_vertices;
 	std::vector<unsigned int> m_indices;
 	std::vector<Texture> m_textures;
