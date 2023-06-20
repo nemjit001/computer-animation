@@ -1,6 +1,11 @@
 // Local Headers
 #include "glitter.hpp"
 #include "Shader.hpp"
+#include "Camera.hpp"
+#include "Mesh.hpp"
+#include "Timer.hpp"
+#include "AssetLoader.hpp"
+#include "GUI.hpp"
 #include "Application.hpp"
 
 // System Headers
@@ -10,54 +15,36 @@
 // Standard Headers
 #include <cstdio>
 #include <cstdlib>
-
-#include <Mesh.hpp>
-#include <Camera.hpp>
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_opengl3.h>
-#include <backends/imgui_impl_opengl3_loader.h>
-
-enum GUI_BUTTON {
-    MODEL_SWITCH,
-    MODEL_SELECT,
-    CAMERA_MODE_SWITCH
-};
+#include <iostream>
 
 // Input Function Declarations
 void processKeyboardInput(GLFWwindow* window);
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos);
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
-void guiButtonCallback(GUI_BUTTON);
 
 // Input Tracking Globals
 bool spacebar_down = false;
-bool wireframe_mode = false;                                // Wireframe Render Flag
-bool show_bones_flag = false;                               // NOTHING YET!
-unsigned int mesh_index = 0;                                // Current Mesh
-const unsigned int num_meshes = 5;                          // Total Number of Meshes
 
-// Rendering Globals
-Mesh* meshes[num_meshes];
-//glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
-float light_position[3] = { -1.0f, 1.0f - 2.0f };
-float manual_metallic = 0.0f;
-float manual_roughness = 0.2f;
-
-// GUI Globals
-char* camera_mode_string = "Camera Type: Normal Camera";
-
-// Time Keeping Globals
-float prev_frame_time = 0.0f;
-float deltaTime = 0.0f;
+// Create Render Settings Globals
+static SceneSettings g_renderData =
+{
+    { -1.0f, 1.0f, -2.0f }, // default light pos
+    { 1.0f, 1.0f, 0.0f },   // default base color
+    { 0.5f, 1.0f, 0.0f },   // default light color
+    0.0f,                   // default metallic color
+    0.2f,                   // default roughness
+    false,                  // default wireframe mode
+    false,                  // default bone visibility,
+    nullptr                 // no active asset at first
+};
+// Create Camera Object
+static Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Create Timer object
+static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
-
-// Create Camera Object
-Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
-
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
 float lastY = (float)mHeight / 2.0;
@@ -82,7 +69,7 @@ int main(int argc, char* argv[])
     // Create Context and Load OpenGL Functions
     glfwMakeContextCurrent(mWindow);
     gladLoadGL();
-    //fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
+    fprintf(stderr, "OpenGL %s\n", glGetString(GL_VERSION));
 
     // Set Callbacks
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
@@ -91,16 +78,6 @@ int main(int argc, char* argv[])
 
     // Hide Cursor and Capture Mouse
     glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    // Setup GUI
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    // Setup Platform/Renderer bindings
-    ImGui_ImplGlfw_InitForOpenGL(mWindow, true);
-    ImGui_ImplOpenGL3_Init("#version 130");
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
 
     // Enable Depth Testing
     glEnable(GL_DEPTH_TEST);
@@ -124,26 +101,18 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
-    defaultShader.use();
-
     // Initialize our application and call its init function
     Application app = Application();
     app.init();
 
-    Mesh mesh0("Assets/cube.obj", defaultShader);
-    Mesh mesh1("Assets/suzanne.obj", defaultShader);
-    Mesh mesh2("Assets/BASEmodel.fbx", textureShader);
-    Mesh mesh3("Assets/test_model.fbx", textureShader);
-    Mesh mesh4("Assets/wiggly.fbx", textureShader);
+    // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
+    AssetLoader assetLoader = AssetLoader();
+    assetLoader.Load("Assets/*.fbx", defaultShader);
+    assetLoader.Load("Assets/*.obj", defaultShader);
 
-    meshes[0] = &mesh0;
-    meshes[1] = &mesh1;
-    meshes[2] = &mesh2;
-    meshes[3] = &mesh3;
-    meshes[4] = &mesh4;
-
-    float base_color[] = { 1.0f, 1.0f, 0.0f };
-    float light_color[] = { 0.5f, 1.0f, 0.0f };
+    // Initialize our GUI
+    GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer, assetLoader);
+    gui.Init();
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -151,10 +120,7 @@ int main(int argc, char* argv[])
         // Tick the application state before the graphics update
         app.tick();
 
-        // Update Time
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - prev_frame_time;
-        prev_frame_time = currentFrame;
+        g_timer.Tick();
 
         // Process Keyboard Input
         processKeyboardInput(mWindow);
@@ -164,55 +130,33 @@ int main(int argc, char* argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Normal/Wireframe Rendering
-        if (wireframe_mode)
+        if (g_renderData.wireframe_mode)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-        // GUI Frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        //defaultShader.use();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);        
 
         // Get View and Projection Matrics from Camera
-        glm::mat4 view = main_camera.GetCurrentViewMatrix();
-        glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
+        glm::mat4 view = g_camera.GetCurrentViewMatrix();
+        glm::mat4 projection = g_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
 
         // Render Mesh
-        meshes[mesh_index]->Render(
-            view,
-            glm::mat4(1.0f),
-            projection,
-            main_camera.position,
-            glm::vec3(light_position[0], light_position[1], light_position[2]),
-            glm::vec3(base_color[0], base_color[1], base_color[2]),
-            glm::vec3(light_color[0], light_color[1], light_color[2]),
-            manual_metallic,
-            manual_roughness
-        );
+        if (g_renderData.active_asset)
+        {
+            g_renderData.active_asset->m_mesh->Render(
+                view,
+                glm::mat4(1.0f),
+                projection,
+                g_camera.position,
+                glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
+                glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
+                glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
+                g_renderData.manual_metallic,
+                g_renderData.manual_roughness
+            );
+        }
 
         // Render GUI
-        ImGui::Begin("Control Window");
-        ImGui::Text("DeltaTime: %f" , deltaTime);
-        ImGui::Text("Use SPACEBAR to enable/disable cursor!");
-        if (ImGui::Button("Switch Model"))
-            guiButtonCallback(MODEL_SWITCH);
-        ImGui::ColorEdit3("Base color", (float*)base_color);
-        ImGui::ColorEdit3("Manual light color", (float*)light_color);
-        ImGui::SliderFloat3("Light position", light_position, -5.0f, 5.0f);
-        ImGui::SliderFloat("Manual metallic", &manual_metallic, 0.0f, 1.0f);
-        ImGui::SliderFloat("Manual roughness", &manual_roughness, 0.0f, 1.0f);
-        ImGui::Checkbox("Toggle wireframe", &wireframe_mode);
-        ImGui::Text(camera_mode_string);
-        if (ImGui::Button("Switch Camera Modes"))
-            guiButtonCallback(CAMERA_MODE_SWITCH);
-        ImGui::Checkbox("Show bones", &show_bones_flag);
-        ImGui::End();
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        gui.Render();
 
         // Flip Buffers and Draw
         glfwSwapBuffers(mWindow);
@@ -222,13 +166,11 @@ int main(int argc, char* argv[])
     // Teardown application and GLFW
     app.shutdown();
 
+    // Cleanup GUI
+    gui.Cleanup();
+
     defaultShader.cleanup();
     textureShader.cleanup();
-
-    // Clean up GUI
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 
     glfwTerminate();
 
@@ -245,10 +187,10 @@ void processKeyboardInput(GLFWwindow* window)
     // Enable/Disable Camera
     if (spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
     {
-        main_camera.enabled = !main_camera.enabled;
+        g_camera.enabled = !g_camera.enabled;
         
         // Enable/Disable Cursor
-        if (main_camera.enabled)
+        if (g_camera.enabled)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -260,17 +202,19 @@ void processKeyboardInput(GLFWwindow* window)
         spacebar_down = true;
 
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
-    if (main_camera.arcball_mode)
+    if (g_camera.arcball_mode)
         return;
 
+    TimeData time = g_timer.GetData();
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        main_camera.MoveCamera(FWD, deltaTime);
+        g_camera.MoveCamera(FWD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        main_camera.MoveCamera(AFT, deltaTime);
+        g_camera.MoveCamera(AFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        main_camera.MoveCamera(LEFT, deltaTime);
+        g_camera.MoveCamera(LEFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        main_camera.MoveCamera(RIGHT, deltaTime);
+        g_camera.MoveCamera(RIGHT, time.DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
@@ -291,38 +235,20 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
     lastX = xpos;
     lastY = ypos;
 
-    if (main_camera.arcball_mode)
-        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
+    TimeData time = g_timer.GetData();
+    if (g_camera.arcball_mode)
+        g_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
     else
-        main_camera.RotateCamera(xoffset, yoffset);
+        g_camera.RotateCamera(xoffset, yoffset);
 }
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    main_camera.MoveArcballCamera(y_offset, deltaTime);
+    TimeData time = g_timer.GetData();
+    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
-}
-
-void guiButtonCallback(GUI_BUTTON button)
-{
-    if (button == MODEL_SWITCH)
-    {
-        mesh_index++;
-        if (mesh_index == num_meshes)
-            mesh_index = 0;
-    }
-
-    else if (button == CAMERA_MODE_SWITCH)
-    {
-        main_camera.arcball_mode = !main_camera.arcball_mode;
-
-        if (main_camera.arcball_mode)
-            camera_mode_string = "Camera Type: Arcball Camera";
-        else
-            camera_mode_string = "Camera Type: Normal Camera";
-    }
 }

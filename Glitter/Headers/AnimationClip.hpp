@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+/// <summary>
+/// Scale, Rotation, Time and Translation data for a keyframe
+/// </summary>
 struct SQT {
 	double time;				// Time of Keyframe
 
@@ -15,11 +18,19 @@ struct SQT {
 	glm::vec3 translation;
 };
 
+/// <summary>
+/// The Pose list for a single Bone
+/// 
+/// XXX: The Bone is referred to by name
+/// </summary>
 struct AnimationPose {
 	std::vector<SQT> bonePoses;
 	std::string bone_name;
 };
 
+/// <summary>
+/// The AnimationClip class contains all data associated with an animation.
+/// </summary>
 class AnimationClip {
 public:
 	AnimationClip(std::string nameID, int n_bones, double duration, double ticks_per_second, std::vector<AnimationPose> poseSamples);
