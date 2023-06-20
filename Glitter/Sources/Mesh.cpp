@@ -168,7 +168,7 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
     glActiveTexture(GL_TEXTURE0);
-
+    glBindVertexArray(0);
 }
 
 void Mesh::ParseAnimations(const aiScene* scene)

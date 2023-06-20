@@ -90,21 +90,21 @@ private:
 	/// </summary>
 	/// <param name="from">: source matrix</param>
 	/// <returns></returns>
-	inline glm::mat4 Mesh::ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
+	inline glm::mat4 ConvertMatrixToGLMFormat(const aiMatrix4x4& from);
 
 	/// <summary>
 	/// Conversion from aiVector3D to glm::vec3
 	/// </summary>
 	/// <param name="src">: source vector</param>
 	/// <returns></returns>
-	inline glm::vec3 Mesh::ConvertVector3DToGLMFormat(const aiVector3D& src);
+	inline glm::vec3 ConvertVector3DToGLMFormat(const aiVector3D& src);
 
 	/// <summary>
 	/// Conversion from aiQuaternion to glm::quat
 	/// </summary>
 	/// <param name="src">: source quaternion</param>
 	/// <returns></returns>
-	inline glm::quat Mesh::ConvertQuaternionToGLMFormat(const aiQuaternion& src);
+	inline glm::quat ConvertQuaternionToGLMFormat(const aiQuaternion& src);
 
 	std::vector<Vertex> m_vertices;												// Vertices of Mesh (Vertex struct)
 	std::vector<unsigned int> m_indices;										// Indices for rendering
