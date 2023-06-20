@@ -45,6 +45,8 @@ static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
+unsigned int animation_index = 0;
+
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
 float lastY = (float)mHeight / 2.0;
@@ -101,6 +103,15 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    // create and link bone shader
+    Shader boneShader = Shader();
+    boneShader.init();
+
+    boneShader
+        .registerShader("Shaders/bone_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
     // Initialize our application and call its init function
     Application app = Application();
     app.init();
@@ -133,12 +144,22 @@ int main(int argc, char* argv[])
         if (g_renderData.wireframe_mode)
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);        
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        // Check whether mesh has animation and evaluate
+        if (meshes[mesh_index]->HasAnimations())
+        {
+            meshes[mesh_index]->Animate(animation_index);
+        }
 
         // Get View and Projection Matrics from Camera
         glm::mat4 view = g_camera.GetCurrentViewMatrix();
         glm::mat4 projection = g_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
-
+  
+        GLuint texture_diffuseID = 0;
+        GLuint texture_normalID = 1;
+        GLuint texture_specularID = 2;
+      
         // Render Mesh
         if (g_renderData.active_asset)
         {
@@ -151,10 +172,13 @@ int main(int argc, char* argv[])
                 glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
                 glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
                 g_renderData.manual_metallic,
-                g_renderData.manual_roughness
+                g_renderData.manual_roughness,
+                texture_diffuseID,
+                texture_normalID,
+                texture_specularID
             );
         }
-
+        
         // Render GUI
         gui.Render();
 
@@ -198,6 +222,12 @@ void processKeyboardInput(GLFWwindow* window)
         spacebar_down = false;
     }
 
+    // Scrolling through animation
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
+        animation_index++;
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
+        animation_index--;
+
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
 
@@ -215,6 +245,10 @@ void processKeyboardInput(GLFWwindow* window)
         g_camera.MoveCamera(LEFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         g_camera.MoveCamera(RIGHT, time.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        main_camera.MoveCamera(UPWARD, time.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        main_camera.MoveCamera(DOWNWARD, time.DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
