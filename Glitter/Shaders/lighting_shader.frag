@@ -64,7 +64,7 @@ void main()
     float roughness = ManualRoughness;
     vec3 albedo = texture(DiffuseTexture, TexCoords).rgb * BaseColor; // Determines the color
     vec3 LightColor = ManualLightColor;
-    vec3 N = normalize(texture(NormalTexture, TexCoords).rgb * 2.0 - 1.0); // Use NormalTexture for normal calculation
+    vec3 N = normalize(texture(NormalTexture, TexCoords).rgb * 2.0 - 1.0); 
     vec3 T = normalize(Tangent - dot(Tangent, N) * N);
     vec3 B = cross(N, T);
     vec3 V = normalize(CamPos - WorldPos);
@@ -82,7 +82,7 @@ void main()
     vec3 H = normalize(V + L);
     float l_distance = length(LightPosition - WorldPos);
     float attenuation = 1.0 / (l_distance * l_distance);
-    vec3 radiance = LightColor * attenuation;
+    vec3 radiance = 10.0 * LightColor * attenuation;
 
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, roughness);
