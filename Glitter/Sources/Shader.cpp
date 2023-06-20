@@ -72,7 +72,7 @@ Shader& Shader::link()
         throw std::runtime_error("Failed to link shader program!");
     }
 
-    return *this;
+     return *this;
 }
 
 Shader& Shader::use()

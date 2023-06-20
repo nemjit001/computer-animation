@@ -24,16 +24,7 @@ public:
 	Mesh();
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
-
-	/// <summary>
-	/// Renders Mesh using the given parameters
-	/// </summary>
-	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
-
-	/// <summary>
-	/// Evaluates and animates the selected keyframe of the animation
-	/// </summary>
-	/// <param name="frame">: the keyframe to be animated</param>
+	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	void Animate(int frame);
 
 	/// <summary>
