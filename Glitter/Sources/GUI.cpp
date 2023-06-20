@@ -42,6 +42,8 @@ void GUI::Render()
 
     ImGui::Begin("Control Window");
     ImGui::Text("DeltaTime: %f", time.DeltaTime);
+    ImGui::Text("FPS: %.2f", time.FPS);
+    ImGui::Text("Animation Frame: %u", m_sceneSettings.animation_frame);
     ImGui::Text("Use SPACEBAR to enable/disable cursor!");
 
     if (ImGui::BeginCombo("Models", label.c_str()))

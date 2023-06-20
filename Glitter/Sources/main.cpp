@@ -36,7 +36,8 @@ static SceneSettings g_renderData =
     0.2f,                   // default roughness
     false,                  // default wireframe mode
     false,                  // default bone visibility,
-    nullptr                 // no active asset at first
+    nullptr,                // no active asset at first,
+    0                       // 0th frame is default for animation
 };
 // Create Camera Object
 static Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -45,7 +46,6 @@ static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
-unsigned int animation_index = 0;
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 
     // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
     AssetLoader assetLoader = AssetLoader();
-    assetLoader.Load("Assets/*.fbx", defaultShader);
+    assetLoader.Load("Assets/*.fbx", boneShader);
     assetLoader.Load("Assets/*.obj", defaultShader);
 
     // Initialize our GUI
@@ -146,12 +146,6 @@ int main(int argc, char* argv[])
         else
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-        // Check whether mesh has animation and evaluate
-        if (meshes[mesh_index]->HasAnimations())
-        {
-            meshes[mesh_index]->Animate(animation_index);
-        }
-
         // Get View and Projection Matrics from Camera
         glm::mat4 view = g_camera.GetCurrentViewMatrix();
         glm::mat4 projection = g_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
@@ -163,7 +157,15 @@ int main(int argc, char* argv[])
         // Render Mesh
         if (g_renderData.active_asset)
         {
-            g_renderData.active_asset->m_mesh->Render(
+            Mesh* pActiveMesh = g_renderData.active_asset->m_mesh.get();
+
+            // Check whether mesh has animation and evaluate
+            if (pActiveMesh->HasAnimations())
+            {
+                pActiveMesh->Animate(g_renderData.animation_frame);
+            }
+
+            pActiveMesh->Render(
                 view,
                 glm::mat4(1.0f),
                 projection,
@@ -222,11 +224,16 @@ void processKeyboardInput(GLFWwindow* window)
         spacebar_down = false;
     }
 
-    // Scrolling through animation
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
-        animation_index++;
-    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
-        animation_index--;
+    if (g_renderData.active_asset)
+    {
+        Mesh* pActiveMesh = g_renderData.active_asset->m_mesh.get();
+
+        // Scrolling through animation
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && g_renderData.animation_frame < pActiveMesh->GetAnimationFrameNum() - 1)
+            g_renderData.animation_frame++;
+        else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && g_renderData.animation_frame > 0)
+            g_renderData.animation_frame--;
+    }
 
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
@@ -246,9 +253,9 @@ void processKeyboardInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         g_camera.MoveCamera(RIGHT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        main_camera.MoveCamera(UPWARD, time.DeltaTime);
+        g_camera.MoveCamera(UPWARD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        main_camera.MoveCamera(DOWNWARD, time.DeltaTime);
+        g_camera.MoveCamera(DOWNWARD, time.DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)

@@ -17,4 +17,5 @@ void Timer::Tick()
 	m_currentTime = glfwGetTime();
 
 	m_timeData.DeltaTime = m_currentTime - m_prevTime;
+	m_timeData.FPS = 1.0f / m_timeData.DeltaTime;
 }

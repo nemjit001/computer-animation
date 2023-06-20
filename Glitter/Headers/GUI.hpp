@@ -34,6 +34,7 @@ struct SceneSettings
     bool wireframe_mode;
     bool show_bones_flag;
     Asset* active_asset;
+    int animation_frame;
 };
 
 /// <summary>

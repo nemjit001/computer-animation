@@ -6,6 +6,7 @@
 struct TimeData
 {
 	float DeltaTime;
+	float FPS;
 };
 
 /// <summary>
