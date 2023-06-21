@@ -57,6 +57,7 @@ bool spacebar_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
 bool show_skybox = true;                                    // Render Skybox Flag
+bool dual_quat_skinning_flag = true;                       // Whether to perform skinning using DQS or Linear
 unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 4;                          // Total Number of Meshes
 unsigned int animation_index = 0;
@@ -136,6 +137,15 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    // create and link dual quaternion shader
+    Shader dqShader = Shader();
+    dqShader.init();
+
+    dqShader
+        .registerShader("Shaders/bone_dq_no_scale_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
     // create and link skybox shader
     Shader skyboxShader = Shader();
     skyboxShader.init();
@@ -156,8 +166,8 @@ int main(int argc, char* argv[])
 
     // Create Meshes
     Mesh mesh0("Assets/cube.obj", defaultShader);
-    Mesh mesh1("Assets/BASEmodel.fbx", boneShader);
-    Mesh mesh2("Assets/bob_lamp.fbx", boneShader);
+    Mesh mesh1("Assets/BASEmodel.fbx", dqShader);
+    Mesh mesh2("Assets/bob_lamp.fbx", dqShader);
     Mesh mesh3("Assets/test_model.fbx", textureShader);
 
     meshes[0] = &mesh0;
@@ -200,7 +210,17 @@ int main(int argc, char* argv[])
         // Check whether mesh has animation and evaluate
         if (meshes[mesh_index]->HasAnimations())
         {
-            meshes[mesh_index]->Animate(animation_index);
+            // Check type of skinning
+            if (dual_quat_skinning_flag)
+            {
+                //meshes[mesh_index]->ChangeShader(dqShader);
+                meshes[mesh_index]->AnimateDualQuat(animation_index);
+            }
+            else
+            {
+                meshes[mesh_index]->ChangeShader(boneShader);
+                meshes[mesh_index]->Animate(animation_index);
+            }
         }
 
         // Get View and Projection Matrics from Camera
@@ -230,6 +250,7 @@ int main(int argc, char* argv[])
         ImGui::Text(camera_mode_string);
         if (ImGui::Button("Switch Camera Modes"))
             guiButtonCallback(CAMERA_MODE_SWITCH);
+        ImGui::Checkbox("Toggle DQS", &dual_quat_skinning_flag);
         ImGui::Checkbox("Toggle Skybox", &show_skybox);
         ImGui::Checkbox("Show bones", &show_bones_flag);
         ImGui::End();
@@ -248,6 +269,7 @@ int main(int argc, char* argv[])
     defaultShader.cleanup();
     textureShader.cleanup();
     boneShader.cleanup();
+    dqShader.cleanup();
     skyboxShader.cleanup();
 
     // Clean up GUI

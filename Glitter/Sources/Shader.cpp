@@ -151,3 +151,16 @@ void Shader::setMat4Vector(const std::string& name, const std::vector<glm::mat4>
 
     glUniformMatrix4fv(uniform_location, (GLsizei)mat_vec.size(), GL_FALSE, glm::value_ptr(mat_vec[0]));
 }
+
+void Shader::setMat4x2Vector(const std::string& name, const std::vector<glm::mat4x2> mat_vec) const
+{
+    int uniform_location = glGetUniformLocation(m_programId, name.c_str());
+
+    if (uniform_location == -1)
+    {
+        std::cout << "ERROR:SHADER::PROGRAM::UNIFORM:: Location with Name " << name << " Not Found or is Not in Use!" << std::endl;
+        return;
+    }
+
+    glUniformMatrix4x2fv(uniform_location, (GLsizei)mat_vec.size(), GL_FALSE, glm::value_ptr(mat_vec[0]));
+}

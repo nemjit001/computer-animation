@@ -26,6 +26,12 @@ public:
 	~Mesh();
 
 	/// <summary>
+	/// Change Shader associated with the mesh
+	/// </summary>
+	/// <param name="new_shader">: the new Shader</param>
+	void ChangeShader(const Shader &new_shader);
+
+	/// <summary>
 	/// Renders Mesh using the given parameters
 	/// </summary>
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float);
@@ -37,12 +43,26 @@ public:
 	void Animate(int frame);
 
 	/// <summary>
+	/// Evaluates and animates the selected keyframe of the animation, using DQS
+	/// </summary>
+	/// <param name="frame">: the keyframe to be animated</param>
+	void AnimateDualQuat(int frame);
+
+	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
 	/// </summary>
 	/// <param name="frame">: the keyframe to be animated</param>
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
+
+	/// <summary>
+	/// Traverses nodes (aiNode) in tree recursively, to calculate final dual quaternions
+	/// </summary>
+	/// <param name="frame">: the keyframe to be animated</param>
+	/// <param name="node">: the node currently processed</param>
+	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
+	void TraverseNodeDualQuat(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
