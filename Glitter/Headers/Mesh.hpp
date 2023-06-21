@@ -27,6 +27,9 @@ public:
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	void Animate(int frame);
 	void AnimateLI(double m_currentTime);
+	void AnimateDualQuat(int frame);
+	void AnimateDualQuatLI(double m_currentTime);
+
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
