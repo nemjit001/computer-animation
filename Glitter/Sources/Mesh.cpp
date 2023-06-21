@@ -530,19 +530,16 @@ void Mesh::TraverseNode(const double m_currentTime, const aiNode* node, const gl
             // Calculate the interpolation factor
             double t = m_currentTime - static_cast<int>(m_currentTime);
 
-            // Interpolate scale
+            // Interpolate scale, rotation and translation
             glm::vec3 scale = glm::mix(currentFrameSQT.scale, nextFrameSQT.scale, static_cast<float>(t));
-
-            // Interpolate rotation
             glm::quat rotation = glm::slerp(currentFrameSQT.rotation, nextFrameSQT.rotation, static_cast<float>(t));
-
-            // Interpolate translation
             glm::vec3 translation = glm::mix(currentFrameSQT.translation, nextFrameSQT.translation, static_cast<float>(t));
 
+            // Add them to the matrices
             glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
             glm::mat4 rotation_matrix = glm::toMat4(rotation);
             glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
-
+            
             node_transform = translation_matrix * rotation_matrix * scale_matrix;
         }
     }
