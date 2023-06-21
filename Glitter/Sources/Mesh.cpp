@@ -454,7 +454,6 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
-//can copy paste those 2 function to overload
 void Mesh::Animate(int frame)
 {
     // TODO: Switching between animations can be added!
@@ -504,7 +503,7 @@ void Mesh::Animate(double m_currentTime)
     // Write bone transforms to vertex shader
     shader.setMat4Vector("boneTransforms", bone_transforms);
 }
-//can add AnimateDualQuat
+//Can add AnimateDualQuat
 
 void Mesh::TraverseNode(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
 {
