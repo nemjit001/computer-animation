@@ -195,6 +195,10 @@ void Mesh::ParseAnimations(const aiScene* scene)
                 // Check keyframe number
                 if (current_channel->mNumPositionKeys > max_frames)
                     max_frames = current_channel->mNumPositionKeys;
+                if (current_channel->mNumRotationKeys > max_frames)
+                    max_frames = current_channel->mNumRotationKeys;
+                if (current_channel->mNumScalingKeys > max_frames)
+                    max_frames = current_channel->mNumScalingKeys;
 
                 // Parse SQTs of channel
                 std::vector<SQT> sqts;
@@ -544,7 +548,7 @@ void Mesh::AnimateDualQuat(int frame)
 
     // Write bone transforms to vertex shader
     shader.setMat4x2Vector("boneTransforms", bone_transforms);
-    shader.setMat4Vector("scaleTransforms", scale_transforms);
+    //shader.setMat4Vector("scaleTransforms", scale_transforms);
 }
 
 void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform)
@@ -578,47 +582,6 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     if (bone_it != bone_map.end())
     {
         m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
-    }
-
-    // Recursion to traverse all nodes
-    for (int i = 0; i < node->mNumChildren; i++)
-    {
-        TraverseNode(frame, node->mChildren[i], global_transformation);
-    }
-}
-
-void Mesh::TraverseNodeDualQuat(const int frame, const aiNode* node, const glm::mat4& parent_transform)
-{
-    std::string node_name(std::string(node->mName.data));
-    glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
-
-    // Get SQT
-    SQT sqt;
-    glm::quat rotation_quat, translation_quat;
-    auto sqt_it = m_animations.back().poseSamples.find(node_name);
-    if (sqt_it != m_animations.back().poseSamples.end())
-    {
-        // Check if keyframe exists
-        if (frame < sqt_it->second.bonePoses.size())
-        {
-            sqt = sqt_it->second.bonePoses[frame];
-
-            //glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), sqt.scale);
-            rotation_quat = glm::normalize(sqt.rotation);
-            translation_quat = glm::quat(0.0f, sqt.translation.x, sqt.translation.y, sqt.translation.z);
-
-            node_transform = glm::toMat4(translation_quat * rotation_quat * 0.5f);
-        }
-    }
-
-    // Combine with parent
-    glm::mat4 global_transformation = parent_transform * node_transform;
-
-    // Get Bone
-    auto bone_it = bone_map.find(node_name);
-    if (bone_it != bone_map.end())
-    {
-        m_bones[bone_it->second].dual_quat = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
     }
 
     // Recursion to traverse all nodes

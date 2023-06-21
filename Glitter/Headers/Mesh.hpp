@@ -56,14 +56,6 @@ public:
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 
-	/// <summary>
-	/// Traverses nodes (aiNode) in tree recursively, to calculate final dual quaternions
-	/// </summary>
-	/// <param name="frame">: the keyframe to be animated</param>
-	/// <param name="node">: the node currently processed</param>
-	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
-	void TraverseNodeDualQuat(const int frame, const aiNode* node, const glm::mat4& parent_transform);
-
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();

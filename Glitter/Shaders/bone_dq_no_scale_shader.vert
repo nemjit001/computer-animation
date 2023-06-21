@@ -19,7 +19,7 @@ out vec2 TexCoords;
 out vec3 TestColor;
 
 uniform mat4x2 boneTransforms[MAX_BONES];   // Each bone transform is represented by two quaternions (mat4x2)
-uniform mat4 scaleTransforms[MAX_BONES];    // Scaling for each bone
+//uniform mat4 scaleTransforms[MAX_BONES];    // Scaling for each bone
 uniform mat4 viewMatrix;
 uniform mat4 modelMatrix;
 uniform mat4 projectionMatrix;

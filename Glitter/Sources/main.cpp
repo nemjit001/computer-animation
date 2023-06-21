@@ -33,7 +33,7 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 void guiButtonCallback(GUI_BUTTON);
 
 // Rendering Globals
-Mesh* meshes[4];
+Mesh* meshes[5];
 //glm::vec3 light_position = glm::vec3(1.0f, 2.0f, 0.0f);
 float light_position[3] = { -1.0f, 1.0f - 2.0f };
 float manual_metallic = 0.0f;
@@ -58,8 +58,8 @@ bool wireframe_mode = false;                                // Wireframe Render 
 bool show_bones_flag = false;                               // NOTHING YET!
 bool show_skybox = true;                                    // Render Skybox Flag
 bool dual_quat_skinning_flag = true;                       // Whether to perform skinning using DQS or Linear
-unsigned int mesh_index = 2;                                // Current Mesh
-const unsigned int num_meshes = 4;                          // Total Number of Meshes
+unsigned int mesh_index = 4;                                // Current Mesh
+const unsigned int num_meshes = 5;                          // Total Number of Meshes
 unsigned int animation_index = 0;
 
 // Track Previous Camera Parameters
@@ -169,11 +169,13 @@ int main(int argc, char* argv[])
     Mesh mesh1("Assets/BASEmodel.fbx", dqShader);
     Mesh mesh2("Assets/bob_lamp.fbx", dqShader);
     Mesh mesh3("Assets/test_model.fbx", textureShader);
+    Mesh mesh4("Assets/wiggly.fbx", dqShader);
 
     meshes[0] = &mesh0;
     meshes[1] = &mesh1;
     meshes[2] = &mesh2;
     meshes[3] = &mesh3;
+    meshes[4] = &mesh4;
 
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };
