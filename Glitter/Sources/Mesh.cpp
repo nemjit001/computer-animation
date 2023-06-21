@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+
 #define STB_IMAGE_IMPLEMENTATION
 //#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords | aiProcess_PreTransformVertices)
 #define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals |  aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords)
@@ -57,6 +59,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     m_indices(indices),
     m_textures(textures),
     shader(shader)
+
 {
     // bind the default vertex array object
     glGenBuffers(1, &m_VAO);

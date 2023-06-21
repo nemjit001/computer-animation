@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     defaultShader.init();
 
     defaultShader
-        .registerShader("Shaders/lighting_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/shader.vert", GL_VERTEX_SHADER)
         .registerShader("Shaders/lighting_shader_simple.frag", GL_FRAGMENT_SHADER)
         .link();
 
