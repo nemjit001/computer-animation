@@ -479,7 +479,7 @@ void Mesh::Animate(int frame)
     shader.setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::Animate(double m_currentTime)
+void Mesh::AnimateLI(double m_currentTime)
 {
     // TODO: Switching between animations can be added!
 

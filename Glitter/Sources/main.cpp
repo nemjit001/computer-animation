@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
             // Check whether mesh has animation and evaluate
             if (pActiveMesh->HasAnimations())
             {
-                pActiveMesh->Animate(g_renderData.animation_frame);
+                pActiveMesh->AnimateLI(g_renderData.animation_frame);
             }
 
             pActiveMesh->Render(

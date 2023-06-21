@@ -26,7 +26,7 @@ public:
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	void Animate(int frame);
-	void Animate(double m_currentTime);
+	void AnimateLI(double m_currentTime);
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
