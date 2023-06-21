@@ -13,6 +13,7 @@
 
 // System Headers
 #include <stb_image.h>
+#include <Timer.hpp>
 
 Mesh::Mesh()
     :
@@ -453,6 +454,7 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
+//can copy paste those 2 function to overload
 void Mesh::Animate(int frame)
 {
     // TODO: Switching between animations can be added!
@@ -478,7 +480,33 @@ void Mesh::Animate(int frame)
     shader.setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform)
+void Mesh::Animate(double m_currentTime)
+{
+    // TODO: Switching between animations can be added!
+
+    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNode(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        bone_transforms[i] = m_bones[i].bone_transform;
+    }
+
+    shader.use();
+
+    // Write bone transforms to vertex shader
+    shader.setMat4Vector("boneTransforms", bone_transforms);
+}
+//can add AnimateDualQuat
+
+void Mesh::TraverseNode(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
 {
     std::string node_name(std::string(node->mName.data));
     glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
@@ -488,14 +516,34 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     auto sqt_it = m_animations.back().poseSamples.find(node_name);
     if (sqt_it != m_animations.back().poseSamples.end())
     {
-        // Check if keyframe exists
-        if (frame < sqt_it->second.bonePoses.size())
-        {
-            sqt = sqt_it->second.bonePoses[frame];
+        const std::vector<SQT>& bonePoses = sqt_it->second.bonePoses;
+        const int numFrames = static_cast<int>(bonePoses.size());
 
-            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), sqt.scale);
-            glm::mat4 rotation_matrix = glm::toMat4(sqt.rotation);
-            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), sqt.translation);
+        // Check if keyframes exist
+        if (numFrames > 0)
+        {
+            // Find frames
+            int frameIndex = static_cast<int>(m_currentTime) % numFrames;
+            int nextFrameIndex = (frameIndex + 1) % numFrames;
+
+            const SQT& currentFrameSQT = bonePoses[frameIndex];
+            const SQT& nextFrameSQT = bonePoses[nextFrameIndex];
+
+            // Calculate the interpolation factor
+            double t = m_currentTime - static_cast<int>(m_currentTime);
+
+            // Interpolate scale
+            glm::vec3 scale = glm::mix(currentFrameSQT.scale, nextFrameSQT.scale, static_cast<float>(t));
+
+            // Interpolate rotation
+            glm::quat rotation = glm::slerp(currentFrameSQT.rotation, nextFrameSQT.rotation, static_cast<float>(t));
+
+            // Interpolate translation
+            glm::vec3 translation = glm::mix(currentFrameSQT.translation, nextFrameSQT.translation, static_cast<float>(t));
+
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
+            glm::mat4 rotation_matrix = glm::toMat4(rotation);
+            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
 
             node_transform = translation_matrix * rotation_matrix * scale_matrix;
         }
@@ -512,11 +560,12 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     }
 
     // Recursion to traverse all nodes
-    for (int i = 0; i < node->mNumChildren; i++)
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        TraverseNode(frame, node->mChildren[i], global_transformation);
+        TraverseNode(m_currentTime, node->mChildren[i], global_transformation);
     }
 }
+
 
 Shader Mesh::getShader()
 {
