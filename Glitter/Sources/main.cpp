@@ -14,6 +14,8 @@
 #include <Mesh.hpp>
 #include <Camera.hpp>
 #include <Skybox.hpp>
+#include <Timer.hpp>
+#include <AnimationPlayer.hpp>
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -42,25 +44,28 @@ float manual_roughness = 0.2f;
 // GUI Globals
 char* camera_mode_string = "Camera Type: Normal Camera";
 
-// Time Keeping Globals
-float prev_frame_time = 0.0f;
-float deltaTime = 0.0f;
-
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
 
 // Create Camera Object
 Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
+// Animation Player
+AnimationPlayer anim_player(nullptr, nullptr);
+
 // Input Tracking Globals
 bool spacebar_down = false;
+bool p_down = false;
 bool wireframe_mode = false;                                // Wireframe Render Flag
 bool show_bones_flag = false;                               // NOTHING YET!
 bool show_skybox = true;                                    // Render Skybox Flag
 bool dual_quat_skinning_flag = true;                       // Whether to perform skinning using DQS or Linear
-unsigned int mesh_index = 4;                                // Current Mesh
+unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 5;                          // Total Number of Meshes
 unsigned int animation_index = 0;
+
+// Timer
+Timer timer;
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -180,6 +185,8 @@ int main(int argc, char* argv[])
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };
 
+    anim_player = AnimationPlayer(&meshes[mesh_index]->GetAnimation(0), meshes[mesh_index]);
+
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
     {
@@ -187,9 +194,7 @@ int main(int argc, char* argv[])
         app.tick();
 
         // Update Time
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - prev_frame_time;
-        prev_frame_time = currentFrame;
+        timer.Tick();
 
         // Process Keyboard Input
         processKeyboardInput(mWindow);
@@ -216,7 +221,8 @@ int main(int argc, char* argv[])
             if (dual_quat_skinning_flag)
             {
                 //meshes[mesh_index]->ChangeShader(dqShader);
-                meshes[mesh_index]->AnimateDualQuat(animation_index);
+                //meshes[mesh_index]->AnimateDualQuat(animation_index);
+                meshes[mesh_index]->AnimateLIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
             else
             {
@@ -238,7 +244,7 @@ int main(int argc, char* argv[])
 
         // Render GUI
         ImGui::Begin("Control Window");
-        ImGui::Text("DeltaTime: %f" , deltaTime);
+        ImGui::Text("DeltaTime: %f" , timer.GetData().DeltaTime);
         ImGui::Text("Animation Frame: %d", animation_index);
         ImGui::Text("Use SPACEBAR to enable/disable cursor!");
         if (ImGui::Button("Switch Model"))
@@ -305,6 +311,14 @@ void processKeyboardInput(GLFWwindow* window)
         spacebar_down = false;
     }
 
+    // Start/Pause Animation
+    if (p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
+    {
+        anim_player.is_playing = !anim_player.is_playing;
+
+        p_down = false;
+    }
+
     // Scrolling through animation
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
         animation_index++;
@@ -314,18 +328,21 @@ void processKeyboardInput(GLFWwindow* window)
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
 
+    if (!p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+        p_down = true;
+
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
     if (main_camera.arcball_mode)
         return;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        main_camera.MoveCamera(FWD, deltaTime);
+        main_camera.MoveCamera(FWD, timer.GetData().DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        main_camera.MoveCamera(AFT, deltaTime);
+        main_camera.MoveCamera(AFT, timer.GetData().DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        main_camera.MoveCamera(LEFT, deltaTime);
+        main_camera.MoveCamera(LEFT, timer.GetData().DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        main_camera.MoveCamera(RIGHT, deltaTime);
+        main_camera.MoveCamera(RIGHT, timer.GetData().DeltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
@@ -347,14 +364,14 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
     lastY = ypos;
 
     if (main_camera.arcball_mode)
-        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
+        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, timer.GetData().DeltaTime);
     else
         main_camera.RotateCamera(xoffset, yoffset);
 }
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    main_camera.MoveArcballCamera(y_offset, deltaTime);
+    main_camera.MoveArcballCamera(y_offset, timer.GetData().DeltaTime);
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)

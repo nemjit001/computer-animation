@@ -43,10 +43,22 @@ public:
 	void Animate(int frame);
 
 	/// <summary>
+	/// Evaluates and animates the current frame using linear interpolation on the current time
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateLI(double m_currentTime);
+
+	/// <summary>
 	/// Evaluates and animates the selected keyframe of the animation, using DQS
 	/// </summary>
 	/// <param name="frame">: the keyframe to be animated</param>
 	void AnimateDualQuat(int frame);
+
+	/// <summary>
+	/// Evaluates and animates the current frame using linear interpolation on the current time, using DQS
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateLIDualQuat(double m_currentTime);
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
@@ -56,9 +68,24 @@ public:
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 
+	/// <summary>
+	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using linear interpolation for SQTs
+	/// </summary>
+	/// <param name="m_currentTime">: the current time of the animation</param>
+	/// <param name="node">: the node currently processed</param>
+	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
+	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
+
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
+
+	/// <summary>
+	/// Returns an animation from the mesh, by index
+	/// </summary>
+	/// <param name="index">: the index of the animation</param>
+	/// <returns></returns>
+	AnimationClip GetAnimation(int index);
 
 private:
 	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
