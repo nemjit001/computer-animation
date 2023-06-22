@@ -1,4 +1,5 @@
 #include "Mesh.hpp"
+#include "bicubic.hpp"
 
 #include <iostream>
 #include <glad/glad.h>
@@ -6,6 +7,7 @@
 //#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 //#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords | aiProcess_PreTransformVertices)
@@ -753,6 +755,77 @@ void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const 
         TraverseNodeLI(m_currentTime, node->mChildren[i], global_transformation);
     }
 }
+
+void Mesh::TraverseNodeBI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
+{
+    std::string node_name(std::string(node->mName.data));
+    glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
+
+    // Get SQT
+    SQT sqt;
+    auto sqt_it = m_animations.back().poseSamples.find(node_name);
+    if (sqt_it != m_animations.back().poseSamples.end())
+    {
+        const std::vector<SQT>& bonePoses = sqt_it->second.bonePoses;
+        const int numFrames = static_cast<int>(bonePoses.size());
+
+        // Check if keyframes exist
+        if (numFrames > 0)
+        {
+            // Look for first keyframe
+            int frame_index = 0;
+            for (int i = 0; i < bonePoses.size() - 1; i++)
+            {
+                if (bonePoses[i].time <= m_currentTime && m_currentTime < bonePoses[i + 1].time)
+                    frame_index = i;
+            }
+
+            // Find frames
+            int nextFrameIndex = frame_index + 1;
+
+            const SQT& currentFrameSQT = bonePoses[frame_index];
+            const SQT& nextFrameSQT = bonePoses[nextFrameIndex];
+
+            // Interpolation factor
+            float t = (m_currentTime - currentFrameSQT.time) / (nextFrameSQT.time - currentFrameSQT.time);
+
+            // Interpolate scale, rotation and translation using bicubic
+            glm::vec3 scale = bicubic_1d<glm::vec3, float>(t, numFrames, [&](int i) {
+                return bonePoses[i].scale;
+                });
+
+            glm::quat rotation = glm::normalize(glm::slerp(currentFrameSQT.rotation, nextFrameSQT.rotation, t));
+
+            glm::vec3 translation = bicubic_1d<glm::vec3, float>(t, numFrames, [&](int i) {
+                return bonePoses[i].translation;
+                });
+
+            // Add them to the matrices
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
+            glm::mat4 rotation_matrix = glm::toMat4(rotation);
+            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
+
+            node_transform = translation_matrix * rotation_matrix * scale_matrix;
+        }
+    }
+
+    // Combine with parent
+    glm::mat4 global_transformation = parent_transform * node_transform;
+
+    // Get Bone
+    auto bone_it = bone_map.find(node_name);
+    if (bone_it != bone_map.end())
+    {
+        m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+    }
+
+    // Recursion to traverse all nodes
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        TraverseNodeBI(m_currentTime, node->mChildren[i], global_transformation);
+    }
+}
+
 
 AnimationClip Mesh::GetAnimation(int index)
 {
