@@ -1,6 +1,6 @@
 #include <AnimationPlayer.hpp>
 
-AnimationPlayer::AnimationPlayer(AnimationClip* anim, Mesh* mesh) : current_anim(anim), tgt_mesh(mesh)
+AnimationPlayer::AnimationPlayer(int anim_index, Mesh* mesh) : current_anim(anim_index), tgt_mesh(mesh)
 {
 
 }
@@ -14,7 +14,7 @@ double AnimationPlayer::UpdateTime(double global_time)
 	double new_time = animation_time + global_time;
 
 	// Check whether time exceeds animation duration, then reset
-	if (new_time > current_anim->duration)
+	if (new_time > tgt_mesh->GetAnimation(current_anim).duration)
 	{
 		ResetTime();
 
@@ -25,4 +25,12 @@ double AnimationPlayer::UpdateTime(double global_time)
 	animation_time = new_time;
 
 	return animation_time;
+}
+
+void AnimationPlayer::SetValues(int anim_index, Mesh* mesh)
+{
+	tgt_mesh = mesh;
+	current_anim = anim_index;
+
+	ResetTime();
 }

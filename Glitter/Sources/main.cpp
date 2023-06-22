@@ -51,7 +51,7 @@ bool first_mouse_flag = true;
 Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Animation Player
-AnimationPlayer anim_player(nullptr, nullptr);
+AnimationPlayer anim_player(0, nullptr);
 
 // Input Tracking Globals
 bool spacebar_down = false;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
     float base_color[] = { 1.0f, 1.0f, 0.0f };
     float light_color[] = { 0.5f, 1.0f, 0.0f };
 
-    anim_player = AnimationPlayer(&meshes[mesh_index]->GetAnimation(0), meshes[mesh_index]);
+    anim_player = AnimationPlayer(0, meshes[mesh_index]);
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
             else
             {
                 meshes[mesh_index]->ChangeShader(boneShader);
-                meshes[mesh_index]->Animate(animation_index);
+                meshes[mesh_index]->AnimateLI(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
         }
 
@@ -247,6 +247,7 @@ int main(int argc, char* argv[])
         ImGui::Text("DeltaTime: %f" , timer.GetData().DeltaTime);
         ImGui::Text("Animation Frame: %d", animation_index);
         ImGui::Text("Use SPACEBAR to enable/disable cursor!");
+        ImGui::Text("Use P to start/pause the animation player!");
         if (ImGui::Button("Switch Model"))
             guiButtonCallback(MODEL_SWITCH);
         ImGui::ColorEdit3("Base color", (float*)base_color);
@@ -387,6 +388,10 @@ void guiButtonCallback(GUI_BUTTON button)
         animation_index = 0;            // Reset animation frame index
         if (mesh_index == num_meshes)
             mesh_index = 0;
+
+        // Update AnimationPlayer
+        if (meshes[mesh_index]->HasAnimations())
+            anim_player.SetValues(0, meshes[mesh_index]);
     }
 
     else if (button == CAMERA_MODE_SWITCH)

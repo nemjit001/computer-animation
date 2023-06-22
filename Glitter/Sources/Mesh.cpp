@@ -699,10 +699,10 @@ void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const 
         const int numFrames = static_cast<int>(bonePoses.size());
 
         // Check if keyframes exist
-        int frame_index = 0;
         if (numFrames > 0)
         {
             // Look for first keyframe
+            int frame_index = 0;
             for (int i = 0; i < bonePoses.size() - 1; i++)
             {
 
