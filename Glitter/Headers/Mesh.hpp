@@ -20,6 +20,8 @@ public:
 	Mesh(Mesh const&) = delete;
 	Mesh& operator=(Mesh const&) = delete;
 
+	const static Shader skeletonShader; // Shader used for rendering the skeleton
+
 	// constructors
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();

@@ -176,54 +176,13 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
 void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness, GLuint texture_diffuse, GLuint texture_normal, GLuint texture_specular)
 {
     // Use shader
-    shader.use();
-
-    // Pass uniforms
-    shader.setMat4("viewMatrix", view);
-    shader.setMat4("modelMatrix", model);
-    shader.setMat4("projectionMatrix", projection);
-    shader.setVec3("CamPos", cam_pos);
-    shader.setVec3("LightPosition", light_pos);
-    shader.setVec3("BaseColor", base_color);
-    shader.setVec3("ManualLightColor", manual_light_color);
-    shader.setFloat("ManualMetallic", manual_metallic);
-    shader.setFloat("ManualRoughness", manual_roughness);
-    shader.setInt("DiffuseTexture", 0);
-    shader.setInt("NormalTexture", 1);
-    shader.setInt("SpecularTexture", 2);
-
+    skeletonShader.use();
 
     for (auto& mesh : m_subMeshes)
         mesh->RenderBones(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness, texture_diffuse, texture_normal, texture_specular);
 
-    // bind appropriate textures
-    unsigned int diffuseNr = 0;
-    unsigned int specularNr = 0;
-    unsigned int normalNr = 0;
-    unsigned int heightNr = 0;
-    for (unsigned int i = 0; i < m_textures.size(); i++)
-    {
-        glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
-        // retrieve texture number (the N in diffuse_textureN)
-        std::string number;
-        std::string name = m_textures[i].type;
-        if (name == "texture_diffuse")
-            number = std::to_string(diffuseNr++);
-        else if (name == "texture_specular")
-            number = std::to_string(specularNr++); // transfer unsigned int to string
-        else if (name == "texture_normal")
-            number = std::to_string(normalNr++); // transfer unsigned int to string
-        else if (name == "texture_height")
-            number = std::to_string(heightNr++); // transfer unsigned int to string
-
-        // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.getShaderID(), (name + number).c_str()), i);
-        // and finally bind the texture
-        glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
-    }
-
-    glBindVertexArray(m_VAO);
-    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(m_skeletonVAO);
+    glDrawElements(GL_TRIANGLES, 0, GL_UNSIGNED_INT, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
 }

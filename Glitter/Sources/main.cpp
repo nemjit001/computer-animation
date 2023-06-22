@@ -112,6 +112,10 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    Mesh::skeletonShader = Shader();
+    Mesh::skeletonShader.init();
+
+
     // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
     AssetLoader assetLoader = AssetLoader();
     assetLoader.Load("Assets/*.fbx", boneShader);
