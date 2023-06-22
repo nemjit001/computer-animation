@@ -112,10 +112,6 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
-    // Initialize our application and call its init function
-    Application app = Application();
-    app.init();
-
     // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
     AssetLoader assetLoader = AssetLoader();
     assetLoader.Load("Assets/*.fbx", boneShader);
@@ -128,9 +124,6 @@ int main(int argc, char* argv[])
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
     {
-        // Tick the application state before the graphics update
-        app.tick();
-
         g_timer.Tick();
 
         // Process Keyboard Input
@@ -203,9 +196,6 @@ int main(int argc, char* argv[])
         glfwSwapBuffers(mWindow);
         glfwPollEvents();
     }
-
-    // Teardown application and GLFW
-    app.shutdown();
 
     // Cleanup GUI
     gui.Cleanup();
