@@ -97,12 +97,24 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glVertexAttribPointer(6, MAXIMUM_BONES, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, weights));
     glEnableVertexAttribArray(6);  // Bone weights
     glBindVertexArray(0);
-    glDeleteBuffers(1, &m_VBO);
-    glDeleteBuffers(1, &m_IBO);
+    
+    glGenVertexArrays(1, &m_skeletonVAO);
+    glBindVertexArray(m_skeletonVAO);
+
+    glGenBuffers(1, &m_skeletonVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_skeletonVBO);
+    glGenBuffers(1, &m_skeletonIBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_skeletonIBO);
 }
 
 Mesh::~Mesh()
 {
+    glDeleteBuffers(1, &m_skeletonVBO);
+    glDeleteBuffers(1, &m_skeletonIBO);
+    glDeleteVertexArrays(1, &m_skeletonVAO);
+
+    glDeleteBuffers(1, &m_VBO);
+    glDeleteBuffers(1, &m_IBO);
     glDeleteVertexArrays(1, &m_VAO);
 }
 
