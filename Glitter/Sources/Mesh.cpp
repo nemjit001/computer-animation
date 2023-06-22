@@ -22,7 +22,7 @@ Mesh::Mesh()
     glGenVertexArrays(1, &m_VAO);
 }
 
-Mesh::Mesh(std::string const& filename, const Shader& shader)
+Mesh::Mesh(std::string const& filename, Shader* shader)
     :
     Mesh()
 {
@@ -53,7 +53,7 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     }
 }
 
-Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader)
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, Shader* shader)
     :
     m_vertices(verts),
     m_indices(indices),
@@ -121,18 +121,18 @@ Mesh::~Mesh()
 void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness)
 {
     // Use shader
-    shader.use();
+    shader->use();
 
     // Pass uniforms
-    shader.setMat4("viewMatrix", view);
-    shader.setMat4("modelMatrix", glm::mat4(1.0f));
-    shader.setMat4("projectionMatrix", projection);
-    shader.setVec3("CamPos", cam_pos);
-    shader.setVec3("LightPosition", light_pos);
-    shader.setVec3("BaseColor", base_color);
-    shader.setVec3("ManualLightColor", manual_light_color);
-    shader.setFloat("ManualMetallic", manual_metallic);
-    shader.setFloat("ManualRoughness", manual_roughness);
+    shader->setMat4("viewMatrix", view);
+    shader->setMat4("modelMatrix", glm::mat4(1.0f));
+    shader->setMat4("projectionMatrix", projection);
+    shader->setVec3("CamPos", cam_pos);
+    shader->setVec3("LightPosition", light_pos);
+    shader->setVec3("BaseColor", base_color);
+    shader->setVec3("ManualLightColor", manual_light_color);
+    shader->setFloat("ManualMetallic", manual_metallic);
+    shader->setFloat("ManualRoughness", manual_roughness);
 
     for (auto& mesh : m_subMeshes)
         mesh->Render(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness);
@@ -158,7 +158,7 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
             number = std::to_string(heightNr++); // transfer unsigned int to string
 
         // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.getShaderID(), (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader->getShaderID(), (name + number).c_str()), i);
         // and finally bind the texture
         glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
     }
@@ -452,7 +452,7 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
-void Mesh::ChangeShader(const Shader& new_shader)
+void Mesh::ChangeShader(Shader* new_shader)
 {
     shader = new_shader;
 }
@@ -476,10 +476,10 @@ void Mesh::Animate(int frame)
         bone_transforms[i] = m_bones[i].bone_transform;
     }
 
-    shader.use();
+    shader->use();
 
     // Write bone transforms to vertex shader
-    shader.setMat4Vector("boneTransforms", bone_transforms);
+    shader->setMat4Vector("boneTransforms", bone_transforms);
 }
 
 void Mesh::AnimateLI(double m_currentTime)
@@ -501,10 +501,10 @@ void Mesh::AnimateLI(double m_currentTime)
         bone_transforms[i] = m_bones[i].bone_transform;
     }
 
-    shader.use();
+    shader->use();
 
     // Write bone transforms to vertex shader
-    shader.setMat4Vector("boneTransforms", bone_transforms);
+    shader->setMat4Vector("boneTransforms", bone_transforms);
 }
 
 void Mesh::AnimateDualQuat(int frame)
@@ -569,11 +569,11 @@ void Mesh::AnimateDualQuat(int frame)
         scale_transforms[i] = scale_mat * m_bones[i].offsetMatrix;
     }
 
-    shader.use();
+    shader->use();
 
     // Write bone transforms to vertex shader
-    shader.setMat4x2Vector("boneTransforms", bone_transforms);
-    //shader.setMat4Vector("scaleTransforms", scale_transforms);
+    shader->setMat4x2Vector("boneTransforms", bone_transforms);
+    //shader->setMat4Vector("scaleTransforms", scale_transforms);
 }
 
 void Mesh::AnimateLIDualQuat(double m_currentTime)
@@ -638,11 +638,11 @@ void Mesh::AnimateLIDualQuat(double m_currentTime)
         scale_transforms[i] = scale_mat * m_bones[i].offsetMatrix;
     }
 
-    shader.use();
+    shader->use();
 
     // Write bone transforms to vertex shader
-    shader.setMat4x2Vector("boneTransforms", bone_transforms);
-    //shader.setMat4Vector("scaleTransforms", scale_transforms);
+    shader->setMat4x2Vector("boneTransforms", bone_transforms);
+    //shader->setMat4Vector("scaleTransforms", scale_transforms);
 }
 
 void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform)
@@ -766,7 +766,7 @@ AnimationClip Mesh::GetAnimation(int index)
     return m_animations[index];
 }
 
-Shader Mesh::getShader()
+Shader* Mesh::getShader()
 {
     return shader;
 }

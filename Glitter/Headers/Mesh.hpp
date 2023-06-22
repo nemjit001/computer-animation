@@ -22,14 +22,14 @@ public:
 
 	// constructors
 	Mesh();
-	Mesh(std::string const& filename, const Shader& shader);
+	Mesh(std::string const& filename, Shader* shader);
 	~Mesh();
 
 	/// <summary>
 	/// Change Shader associated with the mesh
 	/// </summary>
 	/// <param name="new_shader">: the new Shader</param>
-	void ChangeShader(const Shader &new_shader);
+	void ChangeShader(Shader* new_shader);
 
 	/// <summary>
 	/// Renders Mesh using the given parameters
@@ -76,7 +76,7 @@ public:
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
 
-	Shader getShader();
+	Shader* getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
 
@@ -88,7 +88,7 @@ public:
 	AnimationClip GetAnimation(int index);
 
 private:
-	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
+	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, Shader* shader);
 
 	void Parse(const aiNode* node, const aiScene* scene);
 	void Parse(const aiMesh* mesh, const aiScene* scene);
@@ -165,7 +165,7 @@ private:
 	const aiScene* scene;														// Points to scene of the mesh. Needed to preserve node tree for bone transformation calculations
 	int m_boneCounter = 0;														// Number of bones in mesh rig
 	glm::mat4 inverse_transform;												// Inverse transform matrix for mesh to scene. Possibly only useful if more submeshes are used
-	Shader shader;																// Shader used for rendering this mesh (Shader class)
+	Shader* shader;																// Shader used for rendering this mesh (Shader class)
 	std::vector<std::unique_ptr<Mesh>> m_subMeshes;								// Who knows at this point
 
 	// Buffer - Array Objects
