@@ -18,7 +18,7 @@ AssetLoader::AssetLoader()
     // 
 }
 
-void AssetLoader::Load(std::string const& expr, Shader const& shader)
+void AssetLoader::Load(std::string const& expr, Shader const& shader, Shader const& skeletonShader)
 {
 #ifdef _WIN32
     WIN32_FIND_DATA fileFindData = {};
@@ -34,7 +34,7 @@ void AssetLoader::Load(std::string const& expr, Shader const& shader)
 
         Asset* pAsset = new Asset{
             std::string(fileFindData.cFileName),
-            std::unique_ptr<Mesh>(new Mesh(path, shader))
+            std::unique_ptr<Mesh>(new Mesh(path, shader, skeletonShader))
         };
 
         m_assets.push_back(

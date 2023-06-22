@@ -112,14 +112,19 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
-    Mesh::skeletonShader = Shader();
-    Mesh::skeletonShader.init();
-
+    Shader skeletonShader = Shader();
+    skeletonShader.init();
+    
+    skeletonShader
+        .registerShader("Shaders/skeleton_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/skeleton_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+    
 
     // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
     AssetLoader assetLoader = AssetLoader();
-    assetLoader.Load("Assets/*.fbx", boneShader);
-    assetLoader.Load("Assets/*.obj", defaultShader);
+    assetLoader.Load("Assets/*.fbx", boneShader, skeletonShader);
+    assetLoader.Load("Assets/*.obj", defaultShader, skeletonShader);
 
     // Initialize our GUI
     GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer, assetLoader);

@@ -12,9 +12,10 @@
 // System Headers
 #include <stb_image.h>
 
-Mesh::Mesh(std::string const& filename, const Shader& shader)
+Mesh::Mesh(std::string const& filename, const Shader& shader, const Shader& skeletonShader)
 {
     this->shader = shader;
+    this->skeletonShader = skeletonShader;
     //Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(
         filename,
@@ -41,12 +42,13 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     }
 }
 
-Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader)
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader, const Shader skeletonShader)
     :
     m_vertices(verts),
     m_indices(indices),
     m_textures(textures),
-    shader(shader)
+    shader(shader),
+    skeletonShader(skeletonShader)
 {
     // bind the default vertex array object
     glGenVertexArrays(1, &m_VAO);
@@ -306,7 +308,7 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     ExtractBoneWeightForVertices(this->m_vertices, mesh, scene);
 
     m_subMeshes.push_back(
-        std::unique_ptr<Mesh>(new Mesh(this->m_vertices, this->m_indices, this->m_textures, shader))
+        std::unique_ptr<Mesh>(new Mesh(this->m_vertices, this->m_indices, this->m_textures, shader, skeletonShader))
     );
 }
 

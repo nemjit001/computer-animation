@@ -25,7 +25,7 @@ public:
     /// </summary>
     /// <param name="expr">Expr to search for, can contain wildcard characters</param>
     /// <param name="shader">Shader to use with Asset</param>
-    void Load(std::string const& expr, Shader const& shader);
+    void Load(std::string const& expr, Shader const& shader, Shader const& skeletonShader);
 
     /// <summary>
     /// Get the list of loaded assets
