@@ -12,17 +12,7 @@
 // System Headers
 #include <stb_image.h>
 
-Mesh::Mesh()
-    :
-    m_VBO(0),
-    m_VAO(0)
-{
-    glGenVertexArrays(1, &m_VAO);
-}
-
 Mesh::Mesh(std::string const& filename, const Shader& shader)
-    :
-    Mesh()
 {
     this->shader = shader;
     //Assimp::Importer importer;
@@ -59,7 +49,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     shader(shader)
 {
     // bind the default vertex array object
-    glGenBuffers(1, &m_VAO);
+    glGenVertexArrays(1, &m_VAO);
     glBindVertexArray(m_VAO);
 
     // bind & create the vertex buffer

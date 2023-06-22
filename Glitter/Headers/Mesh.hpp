@@ -21,7 +21,6 @@ public:
 	Mesh& operator=(Mesh const&) = delete;
 
 	// constructors
-	Mesh();
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
