@@ -25,6 +25,7 @@ public:
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
+	void RenderBones(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);	
 	void Animate(int frame);
 
 	/// <summary>

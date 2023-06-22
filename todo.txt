@@ -1,0 +1,17 @@
+Step 1
+Let's start by duplicating the mesh render as renderBones
+
+Step 2
+Replace the geometry used for the renderBones with a single cube shape
+
+Step 3
+Create a singular bone shape, render that.
+
+Step 4
+Replace the singular bone shape with x bone shapes. One for every bone. (all in the same spot, no transformations)
+
+Step 5
+Transform the bones according to the matrix of the parent
+
+Step x
+Custom shader ?
