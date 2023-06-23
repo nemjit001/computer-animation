@@ -7,7 +7,8 @@ GUI::GUI(GLFWwindow* pWindow, Camera& camera, SceneSettings& sceneSettings, Time
     m_sceneSettings(sceneSettings),
     m_timer(timer),
     m_loader(loader),
-    m_cameraMode("Camera Type: Normal Camera")
+    m_cameraMode("Camera Type: Normal Camera"),
+    b_playing(false)
 {
     //
 }
@@ -44,6 +45,22 @@ void GUI::Render()
     ImGui::Text("DeltaTime: %f", time.DeltaTime);
     ImGui::Text("FPS: %.2f", time.FPS);
     ImGui::Text("Animation Frame: %u", m_sceneSettings.animation_frame);
+
+    // Player controls
+
+    if (ImGui::ArrowButton("back", ImGuiDir_Left))
+        GuiButtonCallback(GUI_BUTTON::PLAYER_BCK);
+
+    ImGui::SameLine();
+    if (ImGui::ArrowButton("fwd", ImGuiDir_Right))
+        GuiButtonCallback(GUI_BUTTON::PLAYER_FWD);
+
+    ImGui::SameLine();
+    if (ImGui::Button(b_playing ? "Pause" : "Play"))
+        GuiButtonCallback(GUI_BUTTON::PLAYER_PLAY_PAUSE);
+
+    // -- end controls
+
     ImGui::Text("Use SPACEBAR to enable/disable cursor!");
 
     if (ImGui::BeginCombo("Models", label.c_str()))
@@ -87,12 +104,17 @@ void GUI::GuiButtonCallback(GUI_BUTTON button)
 {
     switch (button)
     {
-    case GUI_BUTTON::MODEL_TOGGLE:
-        break;
     case GUI_BUTTON::CAMERA_MODE_TOGGLE:
         m_camera.arcball_mode = !m_camera.arcball_mode;
         m_cameraMode = m_camera.arcball_mode ?
             std::string("Camera Type: Arcball Camera") : std::string("Camera Type: Normal Camera");
+        break;
+    case GUI_BUTTON::PLAYER_PLAY_PAUSE:
+        b_playing = !b_playing;
+        break;
+    case GUI_BUTTON::PLAYER_FWD:
+        break;
+    case GUI_BUTTON::PLAYER_BCK:
         break;
     default:
         break;

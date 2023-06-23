@@ -15,8 +15,10 @@
 /// </summary>
 enum class GUI_BUTTON
 {
-    MODEL_TOGGLE,
-    CAMERA_MODE_TOGGLE
+    CAMERA_MODE_TOGGLE,
+    PLAYER_PLAY_PAUSE,
+    PLAYER_FWD,
+    PLAYER_BCK
 };
 
 /// <summary>
@@ -73,4 +75,5 @@ private:
     Timer& m_timer;
     AssetLoader& m_loader;
     std::string m_cameraMode;
+    bool b_playing;
 };
