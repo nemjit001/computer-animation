@@ -83,6 +83,10 @@ void GUI::Cleanup()
     ImGui::DestroyContext();
 }
 
+bool GUI::ShouldRenderBones() {
+    return m_sceneSettings.show_bones_flag;
+}
+
 void GUI::GuiButtonCallback(GUI_BUTTON button)
 {
     switch (button)

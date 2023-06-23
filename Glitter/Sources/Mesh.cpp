@@ -180,11 +180,15 @@ void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection, gl
     // Use shader
     skeletonShader.use();
 
+    skeletonShader.setMat4("viewMatrix", view);
+    skeletonShader.setMat4("modelMatrix", model);
+    skeletonShader.setMat4("projectionMatrix", projection);
+
     for (auto& mesh : m_subMeshes)
         mesh->RenderBones(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness, texture_diffuse, texture_normal, texture_specular);
 
-    glBindVertexArray(m_skeletonVAO);
-    glDrawElements(GL_TRIANGLES, 0, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(m_VAO);
+    glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(0);
 }

@@ -60,6 +60,7 @@ public:
     /// </summary>
     void Cleanup();
 
+    bool ShouldRenderBones();
 private:
     /// <summary>
     /// The GUI callback is used to update our reference's state using the GUI_BUTTON enum
