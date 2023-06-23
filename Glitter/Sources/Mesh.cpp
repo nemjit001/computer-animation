@@ -884,13 +884,13 @@ void Mesh::TraverseNodeBI(const double m_currentTime, const aiNode* node, const 
             float t = (m_currentTime - currentFrameSQT.time) / (nextFrameSQT.time - currentFrameSQT.time);
 
             // Interpolate scale, rotation and translation using bicubic
-            glm::vec3 scale = bicubic_1d<glm::vec3, float>(t, numFrames, [&](int i) {
+            glm::vec3 scale = bicubic_2d<glm::vec3, float>(t, 0.0f, numFrames, 1, [&](int i, int j) {
                 return bonePoses[i].scale;
                 });
 
             glm::quat rotation = glm::normalize(glm::slerp(currentFrameSQT.rotation, nextFrameSQT.rotation, t));
 
-            glm::vec3 translation = bicubic_1d<glm::vec3, float>(t, numFrames, [&](int i) {
+            glm::vec3 translation = bicubic_2d<glm::vec3, float>(t, 0.0f, numFrames, 1, [&](int i, int j) {
                 return bonePoses[i].translation;
                 });
 
