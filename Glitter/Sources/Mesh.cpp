@@ -102,14 +102,11 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glBindVertexArray(0);
 
     // Add hardcoded bone vertices & indices:
-    std::vector<Vertex> boneVertices = std::vector<Vertex>();
+    std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
     for (int x = 0; x < 2; x++) {
         for (int y = 0; y < 2; y++) {
             for (int z = 0; z < 2; z++) {
-                Vertex vert = Vertex();
-                vert.position = glm::vec3(x, y, z);
-
-                boneVertices.push_back(vert);
+                boneVertices.push_back(glm::vec3(x, y, z));
             }
         }
     }
@@ -161,7 +158,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     );
     m_boneIndexCount = boneIndices.size();
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
     glEnableVertexAttribArray(0); // Vertex Positions
 }
 
