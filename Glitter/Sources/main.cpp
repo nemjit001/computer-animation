@@ -227,12 +227,12 @@ int main(int argc, char* argv[])
             {
                 meshes[mesh_index]->ChangeShader(&dqShader);
                 //meshes[mesh_index]->AnimateDualQuat(animation_index);
-                meshes[mesh_index]->AnimateBIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
             else
             {
                 meshes[mesh_index]->ChangeShader(&boneShader);
-                meshes[mesh_index]->AnimateBI(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                meshes[mesh_index]->AnimateCI(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
         }
 
