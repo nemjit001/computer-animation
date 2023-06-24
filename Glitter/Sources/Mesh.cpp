@@ -521,9 +521,6 @@ void Mesh::Animate(int frame, std::vector<glm::vec3>* boneVertices)
 
 void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices)
 {
-    boneVertices->push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
-    boneVertices->push_back(glm::vec3(0, 3, 0));// * m_bones[i].bone_transform);
-
     std::string node_name(std::string(node->mName.data));
     glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
 
@@ -537,9 +534,9 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
         {
             sqt = sqt_it->second.bonePoses[frame];
 
-            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), sqt.scale);
+            glm::mat4 scale_matrix = glm::scale(glm::identity<glm::mat4>(), sqt.scale);
             glm::mat4 rotation_matrix = glm::toMat4(sqt.rotation);
-            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), sqt.translation);
+            glm::mat4 translation_matrix = glm::translate(glm::identity<glm::mat4>(), sqt.translation);
 
             node_transform = translation_matrix * rotation_matrix * scale_matrix;
         }
@@ -553,6 +550,16 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     if (bone_it != bone_map.end())
     {
         m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+
+        glm::mat4 inverseOffset = glm::inverse(m_bones[bone_it->second].offsetMatrix);//glm::inverse(m_bones[bone_it->second].offsetMatrix);
+            
+
+        glm::vec4 bonePosition1 = inverseOffset * glm::vec4(0, 0, 0, 1);
+        glm::vec4 bonePosition2 = inverseOffset * glm::vec4(0, 1, 0, 1);
+            
+
+        boneVertices->push_back(glm::vec3(bonePosition1.x, bonePosition1.y, bonePosition1.z));
+        boneVertices->push_back(glm::vec3(bonePosition2.x, bonePosition2.y, bonePosition2.z));
     }
 
     // Recursion to traverse all nodes
