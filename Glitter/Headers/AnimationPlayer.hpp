@@ -17,7 +17,7 @@ public:
 	/// Uses global time to set new animation time, while checking that it doesn't surpass its duration, in which case it resets
 	/// </summary>
 	/// <param name="global_time">: time from global timer</param>
-	double UpdateTime(double global_time);
+	double UpdateTime(double global_time, float animation_speed);
 
 	/// <summary>
 	/// Resets time

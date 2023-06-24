@@ -5,13 +5,13 @@ AnimationPlayer::AnimationPlayer(int anim_index, Mesh* mesh) : current_anim(anim
 
 }
 
-double AnimationPlayer::UpdateTime(double global_time)
+double AnimationPlayer::UpdateTime(double global_time, float animation_speed)
 {
 	// If animation is paused, return
 	if (!is_playing)
 		return animation_time;
 
-	double new_time = animation_time + global_time;
+	double new_time = animation_time + global_time * animation_speed;
 
 	// Check whether time exceeds animation duration, then reset
 	if (new_time > tgt_mesh->GetAnimation(current_anim).duration)

@@ -61,6 +61,7 @@ bool show_bones_flag = false;                               // NOTHING YET!
 bool show_skybox = true;                                    // Render Skybox Flag
 bool dual_quat_skinning_flag = false;                       // Whether to perform skinning using DQS or Linear
 bool cubic_interpolation_flag = false;                      // Whether to run cubic interpolation instead of linear
+float anim_speed = 1.0f;                                    // Speed factor for the animation
 unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 5;                          // Total Number of Meshes
 unsigned int animation_index = 0;
@@ -238,17 +239,17 @@ int main(int argc, char* argv[])
                 //meshes[mesh_index]->ChangeShader(&dqShader);
                 //meshes[mesh_index]->AnimateDualQuat(animation_index);
                 if (cubic_interpolation_flag)
-                    meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                    meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime, anim_speed));
                 else
-                    meshes[mesh_index]->AnimateLIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                    meshes[mesh_index]->AnimateLIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime, anim_speed));
             }
             else
             {
                 meshes[mesh_index]->ChangeShader(&boneShader);
                 if (cubic_interpolation_flag)
-                    meshes[mesh_index]->AnimateCI(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                    meshes[mesh_index]->AnimateCI(anim_player.UpdateTime(timer.GetData().DeltaTime, anim_speed));
                 else
-                    meshes[mesh_index]->AnimateLI(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                    meshes[mesh_index]->AnimateLI(anim_player.UpdateTime(timer.GetData().DeltaTime, anim_speed));
             }
         }
 
@@ -269,6 +270,7 @@ int main(int argc, char* argv[])
         ImGui::Text("Animation Frame: %d", animation_index);
         ImGui::Text("Use SPACEBAR to enable/disable cursor!");
         ImGui::Text("Use P to start/pause the animation player!");
+        ImGui::SliderFloat("Animation speed", &anim_speed, 0.1f, 2.0f);
         if (ImGui::Button("Switch Model"))
             guiButtonCallback(MODEL_SWITCH);
         ImGui::ColorEdit3("Base color", (float*)base_color);
