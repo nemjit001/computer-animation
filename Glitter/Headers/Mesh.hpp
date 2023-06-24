@@ -24,8 +24,8 @@ public:
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
-	void RenderBones(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);	
-	void Animate(int frame);
+	void RenderBones(glm::mat4, glm::mat4, glm::mat4);	
+	void Animate(int frame, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
@@ -33,10 +33,10 @@ public:
 	/// <param name="frame">: the keyframe to be animated</param>
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
-	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
+	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices);
 
 	static void PrepareSkeletonBOs();
-	static void UpdateSkeleton();
+	static void UpdateSkeletonVertices(std::vector<glm::vec3> boneVertices);
 
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!

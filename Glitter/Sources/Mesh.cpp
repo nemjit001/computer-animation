@@ -108,15 +108,18 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
 void Mesh::PrepareSkeletonBOs() {
     glGenVertexArrays(1, &m_skeletonVAO);
     glBindVertexArray(m_skeletonVAO);
+  
 
-    std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
+    glGenBuffers(1, &m_skeletonVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_skeletonVBO);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+    glEnableVertexAttribArray(0); // Vertex Positions
 
-    boneVertices.push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
-    boneVertices.push_back(glm::vec3(0, 3, 0));// * m_bones[i].bone_transform);
+    glBindVertexArray(0);
+}
 
+void Mesh::UpdateSkeletonVertices(std::vector<glm::vec3> boneVertices) {
     m_boneVertexCount = boneVertices.size();
-
-    // Set skeleton GPU objects:
 
     glBindBuffer(GL_ARRAY_BUFFER, m_skeletonVBO);
     glBufferData(
@@ -124,18 +127,7 @@ void Mesh::PrepareSkeletonBOs() {
         boneVertices.size() * sizeof(glm::vec3),
         boneVertices.data(),
         GL_STATIC_DRAW
-    );
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
-    glEnableVertexAttribArray(0); // Vertex Positions
-
-    glGenBuffers(1, &m_skeletonVBO);
-
-    glBindVertexArray(0);
-}
-
-void Mesh::UpdateSkeleton() {
-    
+    );    
 }
 
 Mesh::~Mesh()
@@ -203,7 +195,7 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
     glBindVertexArray(0);
 }
 
-void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness, GLuint texture_diffuse, GLuint texture_normal, GLuint texture_specular)
+void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection)
 {
     // Use shader
     skeletonShader.use();
@@ -213,7 +205,7 @@ void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection, gl
     skeletonShader.setMat4("projectionMatrix", projection);
 
     for (auto& mesh : m_subMeshes)
-        mesh->RenderBones(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness, texture_diffuse, texture_normal, texture_specular);
+        mesh->RenderBones(view, model, projection);
 
     glBindVertexArray(m_skeletonVAO);
     glDrawArrays(GL_LINES, 0, m_boneVertexCount);
@@ -502,7 +494,7 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
-void Mesh::Animate(int frame)
+void Mesh::Animate(int frame, std::vector<glm::vec3>* boneVertices)
 {
     // TODO: Switching between animations can be added!
 
@@ -511,7 +503,7 @@ void Mesh::Animate(int frame)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNode(frame, scene->mRootNode, initial_matrix);
+    TraverseNode(frame, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
 
@@ -527,8 +519,11 @@ void Mesh::Animate(int frame)
     shader.setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform)
+void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices)
 {
+    boneVertices->push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
+    boneVertices->push_back(glm::vec3(0, 3, 0));// * m_bones[i].bone_transform);
+
     std::string node_name(std::string(node->mName.data));
     glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
 
@@ -563,7 +558,7 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     // Recursion to traverse all nodes
     for (int i = 0; i < node->mNumChildren; i++)
     {
-        TraverseNode(frame, node->mChildren[i], global_transformation);
+        TraverseNode(frame, node->mChildren[i], global_transformation, boneVertices);
     }
 }
 

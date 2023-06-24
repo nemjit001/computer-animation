@@ -164,7 +164,11 @@ int main(int argc, char* argv[])
             // Check whether mesh has animation and evaluate
             if (pActiveMesh->HasAnimations())
             {
-                pActiveMesh->Animate(g_renderData.animation_frame);
+                std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
+
+                pActiveMesh->Animate(g_renderData.animation_frame, &boneVertices);
+
+                Mesh::UpdateSkeletonVertices(boneVertices);
             }
 
             pActiveMesh->Render(
@@ -189,16 +193,7 @@ int main(int argc, char* argv[])
                 pActiveMesh->RenderBones(
                     view,
                     glm::mat4(1.0f),
-                    projection,
-                    g_camera.position,
-                    glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
-                    glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
-                    glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
-                    g_renderData.manual_metallic,
-                    g_renderData.manual_roughness,
-                    texture_diffuseID,
-                    texture_normalID,
-                    texture_specularID
+                    projection
                 );
             }
         }
