@@ -103,6 +103,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
 
     // Add hardcoded bone vertices & indices:
     std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
+
     for (int x = 0; x < 2; x++) {
         for (int y = 0; y < 2; y++) {
             for (int z = 0; z < 2; z++) {
@@ -111,28 +112,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
         }
     }
 
-    std::vector<unsigned int> boneIndices = std::vector<unsigned int>();
-    {
-        // x = 0
-        boneIndices.push_back(0);
-        boneIndices.push_back(1);
-        boneIndices.push_back(2);
-
-        boneIndices.push_back(1);
-        boneIndices.push_back(2);
-        boneIndices.push_back(3);
-    }
-
-    {
-        // x = 1
-        boneIndices.push_back(4);
-        boneIndices.push_back(5);
-        boneIndices.push_back(6);
-
-        boneIndices.push_back(5);
-        boneIndices.push_back(6);
-        boneIndices.push_back(7);
-    }
+    m_boneVertexCount = boneVertices.size();
 
     // Set skeleton GPU objects:
     
@@ -148,24 +128,16 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
         GL_STATIC_DRAW
     );
 
-    glGenBuffers(1, &m_skeletonIBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_skeletonIBO);
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER,
-        boneIndices.size() * sizeof(unsigned int),
-        boneIndices.data(),
-        GL_STATIC_DRAW
-    );
-    m_boneIndexCount = boneIndices.size();
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
     glEnableVertexAttribArray(0); // Vertex Positions
+
+
+    glBindVertexArray(0);
 }
 
 Mesh::~Mesh()
 {
     glDeleteBuffers(1, &m_skeletonVBO);
-    glDeleteBuffers(1, &m_skeletonIBO);
     glDeleteVertexArrays(1, &m_skeletonVAO);
 
     glDeleteBuffers(1, &m_VBO);
@@ -241,7 +213,7 @@ void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection, gl
         mesh->RenderBones(view, model, projection, cam_pos, light_pos, base_color, manual_light_color, manual_metallic, manual_roughness, texture_diffuse, texture_normal, texture_specular);
 
     glBindVertexArray(m_skeletonVAO);
-    glDrawElements(GL_TRIANGLES, m_boneIndexCount, GL_UNSIGNED_INT, 0);
+    glDrawArrays(GL_LINES, 0, m_boneVertexCount);
     glBindVertexArray(0);
 }
 

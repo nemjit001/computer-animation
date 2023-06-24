@@ -108,7 +108,7 @@ private:
 
 	std::vector<Vertex> m_vertices;												// Vertices of Mesh (Vertex struct)
 	std::vector<unsigned int> m_indices;										// Indices for rendering
-	unsigned int m_boneIndexCount;												// Number of indices for rendering the bone (part of the skeleton)
+	unsigned int m_boneVertexCount;												// Number of vertices for rendering the bone (part of the skeleton)
 	std::vector<Texture> m_textures;											// Textures associated with this mesh
 	std::map<std::string, int> bone_map;										// Map connects node - bone names to indices in m_bones vector
 	std::vector<BoneInfo> m_bones;												// Is indexed by the indices in bone_map
@@ -128,6 +128,5 @@ private:
 	unsigned int m_VAO;
 
 	unsigned int m_skeletonVBO;
-	unsigned int m_skeletonIBO;
 	unsigned int m_skeletonVAO;
 };
