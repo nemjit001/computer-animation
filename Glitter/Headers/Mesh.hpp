@@ -21,7 +21,7 @@ public:
 	Mesh& operator=(Mesh const&) = delete;
 
 	// constructors
-	Mesh(std::string const& filename, const Shader& shader, const Shader& skeletonShader);
+	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	void RenderBones(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);	
@@ -39,8 +39,10 @@ public:
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
 
+	static Shader skeletonShader;
+
 private:
-	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader, const Shader skeletonShader);
+	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
 
 	void Parse(const aiNode* node, const aiScene* scene);
 	void Parse(const aiMesh* mesh, const aiScene* scene);
@@ -124,7 +126,6 @@ private:
 	int m_boneCounter = 0;														// Number of bones in mesh rig
 	glm::mat4 inverse_transform;												// Inverse transform matrix for mesh to scene. Possibly only useful if more submeshes are used
 	Shader shader;																// Shader used for rendering this mesh (Shader class)
-	Shader skeletonShader;														// Shader used for rendering the skeleton (Shader class)
 	std::vector<std::unique_ptr<Mesh>> m_subMeshes;								// Who knows at this point
 
 	// Buffer - Array Objects
