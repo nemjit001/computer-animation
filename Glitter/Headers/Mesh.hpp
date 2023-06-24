@@ -35,6 +35,9 @@ public:
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform);
 
+	static void PrepareSkeletonBOs();
+	static void UpdateSkeleton();
+
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
@@ -72,11 +75,6 @@ private:
 	/// <param name="mesh">: the mesh</param>
 	/// <param name="scene">: the scene of the mesh</param>
 	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene);
-
-	/// <summary>
-	/// Prepares the VAO and VBO for the skeleton rendering
-	/// </summary>
-	void PrepareSkeleton();
 
 	/// <summary>
 	/// Loads textures bases on type

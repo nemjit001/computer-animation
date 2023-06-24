@@ -105,8 +105,10 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glBindVertexArray(0);
 }
 
-void Mesh::PrepareSkeleton() {
-    // Add hardcoded bone vertices & indices:
+void Mesh::PrepareSkeletonBOs() {
+    glGenVertexArrays(1, &m_skeletonVAO);
+    glBindVertexArray(m_skeletonVAO);
+
     std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
 
     boneVertices.push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
@@ -116,10 +118,6 @@ void Mesh::PrepareSkeleton() {
 
     // Set skeleton GPU objects:
 
-    glGenVertexArrays(1, &m_skeletonVAO);
-    glBindVertexArray(m_skeletonVAO);
-
-    glGenBuffers(1, &m_skeletonVBO);
     glBindBuffer(GL_ARRAY_BUFFER, m_skeletonVBO);
     glBufferData(
         GL_ARRAY_BUFFER,
@@ -131,7 +129,13 @@ void Mesh::PrepareSkeleton() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
     glEnableVertexAttribArray(0); // Vertex Positions
 
+    glGenBuffers(1, &m_skeletonVBO);
+
     glBindVertexArray(0);
+}
+
+void Mesh::UpdateSkeleton() {
+    
 }
 
 Mesh::~Mesh()
@@ -335,7 +339,7 @@ void Mesh::Parse(const aiMesh* mesh, const aiScene* scene)
     ExtractBoneWeightForVertices(this->m_vertices, mesh, scene);
 
     // Prepare skeleton needs bone information, do it just after m_bones has been filled with data
-    PrepareSkeleton();
+    PrepareSkeletonBOs();
 
     m_subMeshes.push_back(
         std::unique_ptr<Mesh>(new Mesh(this->m_vertices, this->m_indices, this->m_textures, shader))
