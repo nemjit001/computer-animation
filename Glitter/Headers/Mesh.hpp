@@ -68,6 +68,11 @@ private:
 	void ExtractBoneWeightForVertices(std::vector<Vertex>& vertices, const aiMesh* mesh, const aiScene* scene);
 
 	/// <summary>
+	/// Prepares the VAO and VBO for the skeleton rendering
+	/// </summary>
+	void PrepareSkeleton();
+
+	/// <summary>
 	/// Loads textures bases on type
 	/// </summary>
 	/// <param name="mat"></param>
