@@ -1,7 +1,7 @@
 #version 430
-// *****************************************************
-// Shader that implements Dual Quaternion Skinning
-// *****************************************************
+// **************************************************************
+// Shader that implements Dual Quaternion Skinning without scale
+// **************************************************************
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -37,32 +37,6 @@ vec4 multiplyQuat(vec4 q1, vec4 q2)
     return q_prod;
 }
 
-vec4 QMul(vec4 p, vec4 q) {
-	vec3 q_v = vec3(q.x, q.y, q.z);
-    vec3 p_v = vec3(p.x, p.y, p.z);
-
-    float q_r = q.w;
-    float p_r = p.w;
-
-    float scalar = q_r * p_r - dot(q_v, p_v);
-    vec3 vector = (p_v * q_r) + (q_v * p_r) + cross(p_v, q_v);
-
-    return vec4(vector.x, vector.y, vector.z, scalar);
-}
-
-// Function to transform vertex by quaternions
-vec4 transformVertexByQuat(vec4 q1, vec4 q2, vec3 vertex)
-{
-    vec4 quat_product = multiplyQuat(2.0 * q2, vec4(-q1.x, -q1.y, -q1.z, q1.w));
-
-    vec3 u = vec3(q1.x, q1.y, q1.z);
-    float s = q1.w;
-
-    vec3 quat_rot = 2.0 * dot(u, vertex) * u + (s * s - dot(u, u)) * vertex + 2.0 * s * cross(u, vertex);
-
-    return vec4(quat_rot + quat_product.xyz, 1.0);
-}
-
 // Function to convert dual quaternion to matrix
 mat4x3 DQToMatrix(vec4 Qn, vec4 Qd)
 {	
@@ -84,16 +58,25 @@ mat4x3 DQToMatrix(vec4 Qn, vec4 Qd)
 	return M;	
 }
 
-
 void main()
 {
     vec4 new_position;
 
+    mat4x2 dq0 = boneTransforms[boneIDs.x];
+	mat4x2 dq1 = boneTransforms[boneIDs.y];
+	mat4x2 dq2 = boneTransforms[boneIDs.z];
+	mat4x2 dq3 = boneTransforms[boneIDs.w];
+
+    // Increases DQS robustness
+    if (dot(dq0[0], dq1[0]) < 0.0) dq1 *= -1.0;
+	if (dot(dq0[0], dq2[0]) < 0.0) dq2 *= -1.0;	
+	if (dot(dq0[0], dq3[0]) < 0.0) dq3 *= -1.0;
+
     // Loop between 4 bones for position
-    mat4x2 finalBoneTransform = boneTransforms[boneIDs.x] * boneWeights.x;
-    finalBoneTransform += boneTransforms[boneIDs.y] * boneWeights.y;
-    finalBoneTransform += boneTransforms[boneIDs.z] * boneWeights.z;
-    finalBoneTransform += boneTransforms[boneIDs.w] * boneWeights.w;
+    mat4x2 finalBoneTransform = dq0 * boneWeights.x;
+    finalBoneTransform += dq1 * boneWeights.y;
+    finalBoneTransform += dq2 * boneWeights.z;
+    finalBoneTransform += dq3 * boneWeights.w;
 
 //    mat4 finalScale = scaleTransforms[boneIDs.x] * boneWeights.x;
 //    finalScale += scaleTransforms[boneIDs.y] * boneWeights.y;

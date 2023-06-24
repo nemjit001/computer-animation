@@ -52,12 +52,6 @@ public:
 	/// Evaluates and animates the current frame using bicubic interpolation on the current time
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateBI(double m_currentTime);
-
-	/// <summary>
-	/// Evaluates and animates the current frame using bicubic interpolation on the current time
-	/// </summary>
-	/// <param name="m_currentTime">: the current animation time</param>
 	void AnimateCI(double m_currentTime);
 
 	/// <summary>
@@ -71,12 +65,6 @@ public:
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
 	void AnimateLIDualQuat(double m_currentTime);
-
-	/// <summary>
-	/// Evaluates and animates the current frame using bicubic interpolation on the current time
-	/// </summary>
-	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateBIDualQuat(double m_currentTime);
 
 	/// <summary>
 	/// Evaluates and animates the current frame using bicubic interpolation on the current time
@@ -99,15 +87,6 @@ public:
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
 	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
-
-	/// <summary>
-	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using bicubic interpolation for SQTs
-	/// </summary>
-	/// <param name="m_currentTime">: the current time of the animation</param>
-	/// <param name="node">: the node currently processed</param>
-	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
-	void TraverseNodeBI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
-
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using cubic interpolation for SQTs

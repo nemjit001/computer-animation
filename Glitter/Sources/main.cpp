@@ -60,6 +60,7 @@ bool wireframe_mode = false;                                // Wireframe Render 
 bool show_bones_flag = false;                               // NOTHING YET!
 bool show_skybox = true;                                    // Render Skybox Flag
 bool dual_quat_skinning_flag = false;                       // Whether to perform skinning using DQS or Linear
+bool cubic_interpolation_flag = false;                      // Whether to run cubic interpolation instead of linear
 unsigned int mesh_index = 2;                                // Current Mesh
 const unsigned int num_meshes = 5;                          // Total Number of Meshes
 unsigned int animation_index = 0;
@@ -142,12 +143,21 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
-    // create and link dual quaternion shader
+    // create and link dual quaternion (without scale) shader
     Shader dqShader = Shader();
     dqShader.init();
 
     dqShader
         .registerShader("Shaders/bone_dq_no_scale_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
+    // create and link dual quaternion (with scale) shader
+    Shader dqScaleShader = Shader();
+    dqScaleShader.init();
+
+    dqScaleShader
+        .registerShader("Shaders/bone_dq_scale_shader.vert", GL_VERTEX_SHADER)
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
@@ -170,12 +180,12 @@ int main(int argc, char* argv[])
     Skybox skybox("Assets/Yokohama3/", skyboxShader);
 
     // Create Meshes
-    /*Mesh mesh0("Assets/cube.obj", &defaultShader);
+    /*Mesh mesh0("Assets/female_doctor.fbx", &dqShader);
     Mesh mesh1("Assets/BASEmodel.fbx", &dqShader);
     Mesh mesh2("Assets/bob_lamp.fbx", &dqShader);
-    Mesh mesh3("Assets/boy_animated.fbx", &boneShader);
+    Mesh mesh3("Assets/boy_animated.fbx", &dqShader);
     Mesh mesh4("Assets/wiggly.fbx", &dqShader);*/
-    Mesh mesh0("Assets/cube.obj", &defaultShader);
+    Mesh mesh0("Assets/female_doctor.fbx", &boneShader);
     Mesh mesh1("Assets/BASEmodel.fbx", &boneShader);
     Mesh mesh2("Assets/bob_lamp.fbx", &boneShader);
     Mesh mesh3("Assets/boy_animated.fbx", &boneShader);
@@ -225,14 +235,20 @@ int main(int argc, char* argv[])
             // Check type of skinning
             if (dual_quat_skinning_flag)
             {
-                meshes[mesh_index]->ChangeShader(&dqShader);
+                //meshes[mesh_index]->ChangeShader(&dqShader);
                 //meshes[mesh_index]->AnimateDualQuat(animation_index);
-                meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                if (cubic_interpolation_flag)
+                    meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                else
+                    meshes[mesh_index]->AnimateLIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
             else
             {
                 meshes[mesh_index]->ChangeShader(&boneShader);
-                meshes[mesh_index]->AnimateCI(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                if (cubic_interpolation_flag)
+                    meshes[mesh_index]->AnimateCI(anim_player.UpdateTime(timer.GetData().DeltaTime));
+                else
+                    meshes[mesh_index]->AnimateLI(anim_player.UpdateTime(timer.GetData().DeltaTime));
             }
         }
 
@@ -265,6 +281,7 @@ int main(int argc, char* argv[])
         if (ImGui::Button("Switch Camera Modes"))
             guiButtonCallback(CAMERA_MODE_SWITCH);
         ImGui::Checkbox("Toggle DQS", &dual_quat_skinning_flag);
+        ImGui::Checkbox("Toggle Cubic interpolation", &cubic_interpolation_flag);
         ImGui::Checkbox("Toggle Skybox", &show_skybox);
         ImGui::Checkbox("Show bones", &show_bones_flag);
         ImGui::End();
