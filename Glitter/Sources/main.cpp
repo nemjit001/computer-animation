@@ -180,6 +180,9 @@ int main(int argc, char* argv[])
     // Create Skybox
     Skybox skybox("Assets/Yokohama3/", skyboxShader);
 
+    // Create Floor Mesh
+    Mesh floor("Assets/ca_floor.fbx", &textureShader);
+
     // Create Meshes
     /*Mesh mesh0("Assets/female_doctor.fbx", &dqShader);
     Mesh mesh1("Assets/BASEmodel.fbx", &dqShader);
@@ -256,6 +259,9 @@ int main(int argc, char* argv[])
         // Get View and Projection Matrics from Camera
         glm::mat4 view = main_camera.GetCurrentViewMatrix();
         glm::mat4 projection = main_camera.GetCurrentProjectionMatrix(mWidth, mHeight);
+
+        // Render floor
+        floor.Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
 
         // Render Mesh
         meshes[mesh_index]->Render(view, glm::mat4(1.0f), projection, main_camera.position, glm::vec3(light_position[0], light_position[1], light_position[2]), glm::vec3(base_color[0], base_color[1], base_color[2]), glm::vec3(light_color[0], light_color[1], light_color[2]), manual_metallic, manual_roughness);
