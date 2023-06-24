@@ -125,13 +125,13 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
 
     {
         // x = 1
-        boneIndices.push_back(1);
-        boneIndices.push_back(2);
-        boneIndices.push_back(3);
+        boneIndices.push_back(4);
+        boneIndices.push_back(5);
+        boneIndices.push_back(6);
 
-        boneIndices.push_back(1);
-        boneIndices.push_back(2);
-        boneIndices.push_back(3);
+        boneIndices.push_back(5);
+        boneIndices.push_back(6);
+        boneIndices.push_back(7);
     }
 
     // Set skeleton GPU objects:
@@ -143,7 +143,7 @@ Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& in
     glBindBuffer(GL_ARRAY_BUFFER, m_skeletonVBO);
     glBufferData(
         GL_ARRAY_BUFFER,
-        boneVertices.size() * sizeof(Vertex),
+        boneVertices.size() * sizeof(glm::vec3),
         boneVertices.data(),
         GL_STATIC_DRAW
     );
