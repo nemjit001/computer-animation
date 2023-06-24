@@ -41,6 +41,9 @@ public:
 
 	static Shader skeletonShader;
 	static unsigned int m_boneVertexCount;												// Number of vertices for rendering the bone (part of the skeleton)
+	static unsigned int m_skeletonVBO;
+	static unsigned int m_skeletonVAO;
+	
 
 private:
 	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
@@ -133,6 +136,4 @@ private:
 	unsigned int m_IBO;
 	unsigned int m_VAO;
 
-	unsigned int m_skeletonVBO;
-	unsigned int m_skeletonVAO;
 };

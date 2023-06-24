@@ -14,6 +14,8 @@
 
 Shader Mesh::skeletonShader;
 unsigned int Mesh::m_boneVertexCount;
+unsigned int Mesh::m_skeletonVAO;
+unsigned int Mesh::m_skeletonVBO;
 
 Mesh::Mesh(std::string const& filename, const Shader& shader)
 {
