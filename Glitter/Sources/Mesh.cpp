@@ -13,6 +13,7 @@
 #include <stb_image.h>
 
 Shader Mesh::skeletonShader;
+unsigned int Mesh::m_boneVertexCount;
 
 Mesh::Mesh(std::string const& filename, const Shader& shader)
 {
@@ -106,10 +107,8 @@ void Mesh::PrepareSkeleton() {
     // Add hardcoded bone vertices & indices:
     std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
 
-    for (int i = 0; i < m_bones.size(); i++) {
-        boneVertices.push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
-        boneVertices.push_back(glm::vec3(0, 3, 0));// * m_bones[i].bone_transform);
-    }
+    boneVertices.push_back(glm::vec3(0, 0, 0));// * m_bones[i].bone_transform);
+    boneVertices.push_back(glm::vec3(0, 3, 0));// * m_bones[i].bone_transform);
 
     m_boneVertexCount = boneVertices.size();
 
