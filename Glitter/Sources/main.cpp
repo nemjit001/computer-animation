@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
                 // Clear the depth buffer so that the skeleton rendering is always on top
                 glClear(GL_DEPTH_BUFFER_BIT);
 
-                pActiveMesh->RenderBones(
+                Mesh::RenderBones(
                     view,
                     glm::mat4(1.0f),
                     projection
@@ -211,6 +211,7 @@ int main(int argc, char* argv[])
 
     defaultShader.cleanup();
     textureShader.cleanup();
+    Mesh::skeletonShader.cleanup();
 
     glfwTerminate();
 

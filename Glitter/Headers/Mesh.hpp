@@ -24,7 +24,15 @@ public:
 	Mesh(std::string const& filename, const Shader& shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
-	void RenderBones(glm::mat4, glm::mat4, glm::mat4);	
+	
+	/// <summary>
+	/// Renders all bones that have been gathered earlier in the skeletonVBO.
+	/// The animated bone information itself is collected in boneVertices while the animation is being done, during the node traversal process
+	/// </summary>
+	/// <param name="view">The current view matrix</param>
+	/// <param name="model">The model matrix. Doesn't make much sense at the time of writing, because we only support 1 model at a time and it's not being transformed.</param>
+	/// <param name="projection">The projection matrix</param>
+	static void RenderBones(glm::mat4, glm::mat4, glm::mat4);	
 	void Animate(int frame, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
@@ -33,19 +41,28 @@ public:
 	/// <param name="frame">: the keyframe to be animated</param>
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
+	/// <param name="boneVertices">: a pointer to the vector containing all the bone vertices. Gets filled with bone vertices throughout the function</param>
 	void TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices);
 
+	/// <summary>
+	/// Creates the buffer objects for the skeleton, VAO & VBO.
+	/// </summary>
 	static void PrepareSkeletonBOs();
+
+	/// <summary>
+	/// Sends a new set of bone vertices to the GPU, into the skeleton VBO.
+	/// </summary>
+	/// <param name="boneVertices"></param>
 	static void UpdateSkeletonVertices(std::vector<glm::vec3> boneVertices);
 
 	Shader getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
 
-	static Shader skeletonShader;
-	static unsigned int m_boneVertexCount;												// Number of vertices for rendering the bone (part of the skeleton)
-	static unsigned int m_skeletonVBO;
-	static unsigned int m_skeletonVAO;
+	static Shader skeletonShader;			// The shader used for all skeleton rendering
+	static unsigned int m_boneVertexCount;	// Number of vertices for rendering the bone (part of the skeleton)
+	static unsigned int m_skeletonVBO;		// A VBO containing the vertices for skeleton rendering
+	static unsigned int m_skeletonVAO;		// A VAO containing the proper setup for easy binding of the skeleton rendering render part
 	
 
 private:

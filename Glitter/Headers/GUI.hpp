@@ -60,6 +60,9 @@ public:
     /// </summary>
     void Cleanup();
 
+    /// <summary>
+    /// Tells the program whether the skeleton of the currently inspected mesh should be shown.
+    /// </summary>
     bool ShouldRenderBones();
 private:
     /// <summary>

@@ -204,9 +204,6 @@ void Mesh::RenderBones(glm::mat4 view, glm::mat4 model, glm::mat4 projection)
     skeletonShader.setMat4("modelMatrix", model);
     skeletonShader.setMat4("projectionMatrix", projection);
 
-    for (auto& mesh : m_subMeshes)
-        mesh->RenderBones(view, model, projection);
-
     glBindVertexArray(m_skeletonVAO);
     glDrawArrays(GL_LINES, 0, m_boneVertexCount);
     glBindVertexArray(0);
