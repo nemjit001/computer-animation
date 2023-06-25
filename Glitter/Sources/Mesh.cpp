@@ -551,15 +551,21 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     {
         m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
 
-        glm::mat4 inverseOffset = glm::inverse(m_bones[bone_it->second].offsetMatrix);//glm::inverse(m_bones[bone_it->second].offsetMatrix);
-            
+        if (node->mParent) {
+            std::string parent_name = std::string(node->mParent->mName.data);
+            auto parent_it = bone_map.find(parent_name);
 
-        glm::vec4 bonePosition1 = inverseOffset * glm::vec4(0, 0, 0, 1);
-        glm::vec4 bonePosition2 = inverseOffset * glm::vec4(0, 1, 0, 1);
-            
+            if (parent_it != bone_map.end()) {
+                glm::mat4 inverseParentOffset = inverse_transform * glm::inverse(m_bones[parent_it->second].offsetMatrix);
+                glm::mat4 inverseOffset = inverse_transform * glm::inverse(m_bones[bone_it->second].offsetMatrix);
 
-        boneVertices->push_back(glm::vec3(bonePosition1.x, bonePosition1.y, bonePosition1.z));
-        boneVertices->push_back(glm::vec3(bonePosition2.x, bonePosition2.y, bonePosition2.z));
+                glm::vec4 bonePositionParent = inverseParentOffset * glm::vec4(0, 0, 0, 1);
+                glm::vec4 bonePosition = inverseOffset * glm::vec4(0, 0, 0, 1);
+
+                boneVertices->push_back(glm::vec3(bonePositionParent.x, bonePositionParent.y, bonePositionParent.z));
+                boneVertices->push_back(glm::vec3(bonePosition.x, bonePosition.y, bonePosition.z));
+            }
+        }
     }
 
     // Recursion to traverse all nodes
