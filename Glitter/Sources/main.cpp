@@ -35,7 +35,7 @@ static SceneSettings g_renderData =
     0.0f,                   // default metallic color
     0.0f,                   // default roughness
     false,                  // default wireframe mode
-    true,                  // default bone visibility,
+    false,                  // default bone visibility,
     nullptr,                // no active asset at first,
     0                       // 0th frame is default for animation
 };
