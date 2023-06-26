@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
             // Check type of skinning
             if (dual_quat_skinning_flag)
             {
-                //meshes[mesh_index]->ChangeShader(&dqShader);
+                meshes[mesh_index]->ChangeShader(&dqShader);
                 //meshes[mesh_index]->AnimateDualQuat(animation_index);
                 if (cubic_interpolation_flag)
                     meshes[mesh_index]->AnimateCIDualQuat(anim_player.UpdateTime(timer.GetData().DeltaTime, anim_speed));

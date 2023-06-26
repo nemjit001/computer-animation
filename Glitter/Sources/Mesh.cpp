@@ -458,6 +458,7 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
 void Mesh::ChangeShader(Shader* new_shader)
 {
     shader = new_shader;
+    m_subMeshes[0]->shader = new_shader;
 }
 
 void Mesh::Animate(int frame)
