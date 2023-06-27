@@ -28,9 +28,9 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 // Create Render Settings Globals
 static SceneSettings g_renderData =
 {
-    { -1.0f, 1.0f, -2.0f }, // default light pos
-    { 1.0f, 1.0f, 0.0f },   // default base color
-    { 1.0f, 1.0f, 1.0f },   // default light color
+    { 1.0f, 5.0f, 5.0f }, // default light pos
+    { 1.0f, 1.0f, 1.0f },   // default base color
+    { 1.0f, 0.5f, 0.0f },   // default light color
     0.0f,                   // default metallic color
     0.0f,                   // default roughness
     false,                  // default wireframe mode
