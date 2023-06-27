@@ -32,6 +32,10 @@ void AssetLoader::Load(std::string const& expr, Shader& shader)
         std::string dir = expr.substr(0, expr.find_last_of('/'));
         std::string path = dir + "/" + fileFindData.cFileName;
 
+        // Skip floor
+        if (std::string(fileFindData.cFileName) == "ca_floor.fbx")
+            continue;
+
         Asset* pAsset = new Asset{
             std::string(fileFindData.cFileName),
             std::unique_ptr<Mesh>(new Mesh(path, &shader))
