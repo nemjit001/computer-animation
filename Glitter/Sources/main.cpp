@@ -211,9 +211,13 @@ int main(int argc, char* argv[])
         GLuint texture_diffuseID = 0;
         GLuint texture_normalID = 1;
         GLuint texture_specularID = 2;
+
+        // Render Skybox
+        if (g_renderData.show_skybox)
+            skybox.Render(view, projection);
       
         // Render floor
-        floor.Render(
+        /*floor.Render(
             view,
             glm::mat4(1.0f),
             projection,
@@ -226,7 +230,7 @@ int main(int argc, char* argv[])
             texture_diffuseID,
             texture_normalID,
             texture_specularID
-        );
+        );*/
 
         // Render Mesh
         if (g_renderData.active_asset)
@@ -300,10 +304,6 @@ int main(int argc, char* argv[])
                 glEnable(GL_DEPTH_TEST);
             }
         }
-
-        // Render Skybox
-        if (g_renderData.show_skybox)
-            skybox.Render(view, projection);
         
         // Render GUI
         gui.Render();
