@@ -162,9 +162,9 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
     shader->setVec3("ManualLightColor", manual_light_color);
     shader->setFloat("ManualMetallic", manual_metallic);
     shader->setFloat("ManualRoughness", manual_roughness);
-    shader->setInt("DiffuseTexture", 0);
-    shader->setInt("NormalTexture", 1);
-    shader->setInt("SpecularTexture", 2);
+    //shader->setInt("DiffuseTexture", 0);
+    //shader->setInt("NormalTexture", 1);
+    //shader->setInt("SpecularTexture", 2);
 
 
     for (auto& mesh : m_subMeshes)
@@ -191,7 +191,8 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
             number = std::to_string(heightNr++); // transfer unsigned int to string
 
         // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader->getShaderID(), (name + number).c_str()), i);
+        //glUniform1i(glGetUniformLocation(shader->getShaderID(), (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader->getShaderID(), name.c_str()), i);
         // and finally bind the texture
         glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
     }

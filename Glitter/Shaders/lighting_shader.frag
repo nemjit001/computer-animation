@@ -17,9 +17,9 @@ uniform vec3 ManualLightColor;
 uniform float ManualMetallic;
 uniform float ManualRoughness;
 
-uniform sampler2D DiffuseTexture;
-uniform sampler2D NormalTexture;
-uniform sampler2D SpecularTexture;
+uniform sampler2D texture_diffuse;
+uniform sampler2D texture_normal;
+uniform sampler2D texture_specular;
 
 float PI = 3.14159265359;
 
@@ -62,9 +62,9 @@ void main()
     // Hardcoded for now
     float metallic = ManualMetallic;
     float roughness = ManualRoughness;
-    vec3 albedo = texture(DiffuseTexture, TexCoords).rgb * BaseColor; // Determines the color
+    vec3 albedo = texture(texture_diffuse, TexCoords).rgb * BaseColor; // Determines the color
     vec3 LightColor = ManualLightColor;
-    vec3 N = normalize(texture(NormalTexture, TexCoords).rgb * 2.0 - 1.0); 
+    vec3 N = normalize(texture(texture_normal, TexCoords).rgb * 2.0 - 1.0); 
     vec3 T = normalize(Tangent - dot(Tangent, N) * N);
     vec3 B = cross(N, T);
     vec3 V = normalize(CamPos - WorldPos);
@@ -100,7 +100,7 @@ void main()
     vec3 diffuseComponent = kD * albedo * radiance * max(dot(N, L), 0.0);
 
     // Apply specular reflections
-    vec3 specularMap = texture(SpecularTexture, TexCoords).rgb;
+    vec3 specularMap = texture(texture_specular, TexCoords).rgb;
     vec3 specularReflection = specularMap * specularComponent;
 
     // Add to outgoing radiance Lo
