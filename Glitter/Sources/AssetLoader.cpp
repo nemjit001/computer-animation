@@ -33,7 +33,7 @@ void AssetLoader::Load(std::string const& expr, Shader& shader)
         std::string path = dir + "/" + fileFindData.cFileName;
 
         // Skip floor
-        if (fileFindData.cFileName == "ca_floor.fbx")
+        if (std::string(fileFindData.cFileName) == "ca_floor.fbx")
             continue;
 
         Asset* pAsset = new Asset{

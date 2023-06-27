@@ -2,6 +2,7 @@
 
 #include "Shader.hpp"
 #include "Mesh.hpp"
+#include <string>
 
 /// <summary>
 /// Asset representation with name and mesh data
