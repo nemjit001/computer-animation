@@ -542,7 +542,7 @@ void Mesh::AnimateLI(double m_currentTime)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix);
+    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
 
@@ -557,32 +557,6 @@ void Mesh::AnimateLI(double m_currentTime)
     // Write bone transforms to vertex shader
     shader->setMat4Vector("boneTransforms", bone_transforms);
 }
-/*
-void Mesh::AnimateBI(double m_currentTime)
-{
-    // TODO: Switching between animations can be added!
-
-    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
-
-    glm::mat4 initial_matrix = glm::mat4(1.0f);
-
-    // Traverse nodes from root node
-    TraverseNodeBI(m_currentTime, scene->mRootNode, initial_matrix);
-
-    bone_transforms.resize(m_boneCounter);
-
-    // Traverse updated bones
-    for (int i = 0; i < m_boneCounter; i++)
-    {
-        bone_transforms[i] = m_bones[i].bone_transform;
-    }
-
-    shader->use();
-
-    // Write bone transforms to vertex shader
-    shader->setMat4Vector("boneTransforms", bone_transforms);
-}
-*/
 
 void Mesh::AnimateCI(double m_currentTime)
 {
@@ -593,7 +567,7 @@ void Mesh::AnimateCI(double m_currentTime)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix);
+    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
 
@@ -617,7 +591,7 @@ void Mesh::AnimateDualQuat(int frame)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNode(frame, scene->mRootNode, initial_matrix);
+    TraverseNode(frame, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
     scale_transforms.resize(m_boneCounter);
@@ -686,7 +660,7 @@ void Mesh::AnimateLIDualQuat(double m_currentTime)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix);
+    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
     scale_transforms.resize(m_boneCounter);
@@ -755,7 +729,7 @@ void Mesh::AnimateCIDualQuat(double m_currentTime)
     glm::mat4 initial_matrix = glm::mat4(1.0f);
 
     // Traverse nodes from root node
-    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix);
+    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix, boneVertices);
 
     bone_transforms.resize(m_boneCounter);
     scale_transforms.resize(m_boneCounter);
@@ -865,7 +839,7 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     }
 }
 
-void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
+void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices)
 {
     std::string node_name(std::string(node->mName.data));
     glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
@@ -921,16 +895,25 @@ void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const 
     if (bone_it != bone_map.end())
     {
         m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+
+        if (node->mParent) {
+            // If node has a parent, add a visible connection from the parent to the node by placing bone vertices at the joint locations.
+            glm::vec4 bonePositionParent = parent_transform * glm::vec4(0, 0, 0, 1);
+            glm::vec4 bonePosition = global_transformation * glm::vec4(0, 0, 0, 1);
+
+            boneVertices->push_back(glm::vec3(bonePositionParent.x, bonePositionParent.y, bonePositionParent.z));
+            boneVertices->push_back(glm::vec3(bonePosition.x, bonePosition.y, bonePosition.z));
+        }
     }
 
     // Recursion to traverse all nodes
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        TraverseNodeLI(m_currentTime, node->mChildren[i], global_transformation);
+        TraverseNodeLI(m_currentTime, node->mChildren[i], global_transformation, boneVertices);
     }
 }
 
-void Mesh::TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
+void Mesh::TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices)
 {
     std::string node_name(std::string(node->mName.data));
     glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
@@ -1017,12 +1000,21 @@ void Mesh::TraverseNodeCI(const double m_currentTime, const aiNode* node, const 
     if (bone_it != bone_map.end())
     {
         m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+
+        if (node->mParent) {
+            // If node has a parent, add a visible connection from the parent to the node by placing bone vertices at the joint locations.
+            glm::vec4 bonePositionParent = parent_transform * glm::vec4(0, 0, 0, 1);
+            glm::vec4 bonePosition = global_transformation * glm::vec4(0, 0, 0, 1);
+
+            boneVertices->push_back(glm::vec3(bonePositionParent.x, bonePositionParent.y, bonePositionParent.z));
+            boneVertices->push_back(glm::vec3(bonePosition.x, bonePosition.y, bonePosition.z));
+        }
     }
 
     // Recursion to traverse all nodes
     for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
-        TraverseNodeCI(m_currentTime, node->mChildren[i], global_transformation);
+        TraverseNodeCI(m_currentTime, node->mChildren[i], global_transformation, boneVertices);
     }
 }
 

@@ -100,7 +100,7 @@ public:
 	/// <param name="m_currentTime">: the current time of the animation</param>
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
-	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
+	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using cubic interpolation for SQTs
@@ -108,7 +108,7 @@ public:
 	/// <param name="m_currentTime">: the current time of the animation</param>
 	/// <param name="node">: the node currently processed</param>
 	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
-	void TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
+	void TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices);
 
 
 	Shader* getShader();
