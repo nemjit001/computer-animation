@@ -21,11 +21,19 @@ public:
 	Mesh& operator=(Mesh const&) = delete;
 
 	// constructors
-	Mesh(std::string const& filename, const Shader& shader);
+	Mesh();
+	Mesh(std::string const& filename, Shader* shader);
 	~Mesh();
 	void Render(glm::mat4, glm::mat4, glm::mat4, glm::vec3, glm::vec3, glm::vec3, glm::vec3, float, float, GLuint, GLuint, GLuint);
 	
 	/// <summary>
+	/// Change Shader associated with the mesh
+	/// </summary>
+	/// <param name="new_shader">: the new Shader</param>
+	void ChangeShader(Shader* new_shader);
+
+	/// <summary>
+	/// Renders Mesh using the given parameters
 	/// Renders all bones that have been gathered earlier in the skeletonVBO.
 	/// The animated bone information itself is collected in boneVertices while the animation is being done, during the node traversal process
 	/// </summary>
@@ -50,14 +58,69 @@ public:
 	static void PrepareSkeletonBOs();
 
 	/// <summary>
+	/// Evaluates and animates the current frame using linear interpolation on the current time
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateLI(double m_currentTime);
+
+	/// <summary>
+	/// Evaluates and animates the current frame using bicubic interpolation on the current time
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateCI(double m_currentTime);
+
+	/// <summary>
+	/// Evaluates and animates the selected keyframe of the animation, using DQS
+	/// </summary>
+	/// <param name="frame">: the keyframe to be animated</param>
+	void AnimateDualQuat(int frame);
+
+	/// <summary>
+	/// Evaluates and animates the current frame using linear interpolation on the current time, using DQS
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateLIDualQuat(double m_currentTime);
+
+	/// <summary>
+	/// Evaluates and animates the current frame using bicubic interpolation on the current time
+	/// </summary>
+	/// <param name="m_currentTime">: the current animation time</param>
+	void AnimateCIDualQuat(double m_currentTime);
+
+	/// <summary>
+	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices
 	/// Sends a new set of bone vertices to the GPU, into the skeleton VBO.
 	/// </summary>
 	/// <param name="boneVertices"></param>
 	static void UpdateSkeletonVertices(std::vector<glm::vec3> boneVertices);
 
-	Shader getShader();
+	/// <summary>
+	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using linear interpolation for SQTs
+	/// </summary>
+	/// <param name="m_currentTime">: the current time of the animation</param>
+	/// <param name="node">: the node currently processed</param>
+	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
+	void TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
+
+	/// <summary>
+	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices using cubic interpolation for SQTs
+	/// </summary>
+	/// <param name="m_currentTime">: the current time of the animation</param>
+	/// <param name="node">: the node currently processed</param>
+	/// <param name="parent_transform">: the tranformation matrix of the parent of this node</param>
+	void TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform);
+
+
+	Shader* getShader();
 	int GetAnimationFrameNum();												// Temp!
 	bool HasAnimations();
+
+	/// <summary>
+	/// Returns an animation from the mesh, by index
+	/// </summary>
+	/// <param name="index">: the index of the animation</param>
+	/// <returns></returns>
+	AnimationClip GetAnimation(int index);
 
 	static Shader skeletonShader;			// The shader used for all skeleton rendering
 	static unsigned int m_boneVertexCount;	// Number of vertices for rendering the bone (part of the skeleton)
@@ -66,7 +129,7 @@ public:
 	
 
 private:
-	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader);
+	Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, Shader* shader);
 
 	void Parse(const aiNode* node, const aiScene* scene);
 	void Parse(const aiMesh* mesh, const aiScene* scene);
@@ -143,12 +206,11 @@ private:
 	const aiScene* scene;														// Points to scene of the mesh. Needed to preserve node tree for bone transformation calculations
 	int m_boneCounter = 0;														// Number of bones in mesh rig
 	glm::mat4 inverse_transform;												// Inverse transform matrix for mesh to scene. Possibly only useful if more submeshes are used
-	Shader shader;																// Shader used for rendering this mesh (Shader class)
+	Shader* shader;																// Shader used for rendering this mesh (Shader class)
 	std::vector<std::unique_ptr<Mesh>> m_subMeshes;								// Who knows at this point
 
 	// Buffer - Array Objects
 	unsigned int m_VBO;
 	unsigned int m_IBO;
 	unsigned int m_VAO;
-
 };

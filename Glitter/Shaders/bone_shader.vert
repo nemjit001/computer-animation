@@ -11,7 +11,7 @@ layout(location = 4) in vec3 biTangent;
 layout(location = 5) in ivec4 boneIDs;      // Size of 4 is in accordance with the 4 bone per vertex convention
 layout(location = 6) in vec4 boneWeights;
 
-const int MAX_BONES = 80;                   // We need a maximum number, and 80 should be safe for the vast majority of rigs
+const int MAX_BONES = 120;                   // We need a maximum number, and 120 should be safe for the vast majority of rigs
 
 out vec3 Normal;
 out vec3 WorldPos;

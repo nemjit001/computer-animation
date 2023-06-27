@@ -4,8 +4,8 @@
 
 Timer::Timer()
 	:
-	m_prevTime(0.0f),
-	m_currentTime(0.0f),
+	m_prevTime(0.0),
+	m_currentTime(0.0),
 	m_timeData()
 {
 	//

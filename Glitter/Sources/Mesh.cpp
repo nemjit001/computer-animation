@@ -1,13 +1,18 @@
 #include "Mesh.hpp"
+#include "bicubic.hpp"
+#include "cubic.hpp"
 
 #include <iostream>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
 
 #define STB_IMAGE_IMPLEMENTATION
 //#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords | aiProcess_PreTransformVertices)
-#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals |  aiProcess_JoinIdenticalVertices | aiProcess_GenUVCoords | aiProcess_FindInvalidData | aiProcess_TransformUVCoords)
+#define SCENE_LOAD_FLAGS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_GenUVCoords)
 
 // System Headers
 #include <stb_image.h>
@@ -17,7 +22,9 @@ unsigned int Mesh::m_boneVertexCount;
 unsigned int Mesh::m_skeletonVAO;
 unsigned int Mesh::m_skeletonVBO;
 
-Mesh::Mesh(std::string const& filename, const Shader& shader)
+Mesh::Mesh(std::string const& filename, Shader* shader)
+    :
+    Mesh()
 {
     this->shader = shader;
 
@@ -47,7 +54,7 @@ Mesh::Mesh(std::string const& filename, const Shader& shader)
     }
 }
 
-Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, const Shader shader)
+Mesh::Mesh(std::vector<Vertex> const& verts, std::vector<unsigned int> const& indices, std::vector<Texture> const& textures, Shader* shader)
     :
     m_vertices(verts),
     m_indices(indices),
@@ -143,7 +150,7 @@ Mesh::~Mesh()
 void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::vec3 cam_pos, glm::vec3 light_pos, glm::vec3 base_color, glm::vec3 manual_light_color, float manual_metallic, float manual_roughness, GLuint texture_diffuse, GLuint texture_normal, GLuint texture_specular)
 {
     // Use shader
-    shader.use();
+    shader->use();
 
     // Pass uniforms
     shader.setMat4("viewMatrix", view);
@@ -184,7 +191,7 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
             number = std::to_string(heightNr++); // transfer unsigned int to string
 
         // now set the sampler to the correct texture unit
-        glUniform1i(glGetUniformLocation(shader.getShaderID(), (name + number).c_str()), i);
+        glUniform1i(glGetUniformLocation(shader->getShaderID(), (name + number).c_str()), i);
         // and finally bind the texture
         glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
     }
@@ -235,13 +242,17 @@ void Mesh::ParseAnimations(const aiScene* scene)
                 // Check keyframe number
                 if (current_channel->mNumPositionKeys > max_frames)
                     max_frames = current_channel->mNumPositionKeys;
+                if (current_channel->mNumRotationKeys > max_frames)
+                    max_frames = current_channel->mNumRotationKeys;
+                if (current_channel->mNumScalingKeys > max_frames)
+                    max_frames = current_channel->mNumScalingKeys;
 
                 // Parse SQTs of channel
                 std::vector<SQT> sqts;
                 for (unsigned int k = 0; k < current_channel->mNumPositionKeys; k++)
                 {
                     SQT new_sqt;
-                    new_sqt.time = current_channel->mPositionKeys->mTime;
+                    new_sqt.time = current_channel->mScalingKeys[k].mTime / current_animation->mTicksPerSecond;
                     new_sqt.scale = ConvertVector3DToGLMFormat(current_channel->mScalingKeys[k].mValue);
                     new_sqt.translation = ConvertVector3DToGLMFormat(current_channel->mPositionKeys[k].mValue);
                     new_sqt.rotation = ConvertQuaternionToGLMFormat(current_channel->mRotationKeys[k].mValue);
@@ -257,7 +268,7 @@ void Mesh::ParseAnimations(const aiScene* scene)
                 poses.insert({channel_bone_name, new_pose});
             }
 
-            AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), max_frames, current_animation->mDuration, current_animation->mTicksPerSecond, poses);
+            AnimationClip new_animation_clip = AnimationClip(std::string(current_animation->mName.data), this->m_bones.size(), max_frames, current_animation->mDuration / current_animation->mTicksPerSecond, current_animation->mTicksPerSecond, poses);
             m_animations.push_back(new_animation_clip);
         }
     }
@@ -491,6 +502,12 @@ unsigned int Mesh::TextureFromFile(const char* path, const std::string& director
     return textureID;
 }
 
+void Mesh::ChangeShader(Shader* new_shader)
+{
+    shader = new_shader;
+    m_subMeshes[0]->shader = new_shader;
+}
+
 void Mesh::Animate(int frame, std::vector<glm::vec3>* boneVertices)
 {
     // TODO: Switching between animations can be added!
@@ -510,10 +527,293 @@ void Mesh::Animate(int frame, std::vector<glm::vec3>* boneVertices)
         bone_transforms[i] = m_bones[i].bone_transform;
     }
 
-    shader.use();
+    shader->use();
 
     // Write bone transforms to vertex shader
-    shader.setMat4Vector("boneTransforms", bone_transforms);
+    shader->setMat4Vector("boneTransforms", bone_transforms);
+}
+
+void Mesh::AnimateLI(double m_currentTime)
+{
+    // TODO: Switching between animations can be added!
+
+    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        bone_transforms[i] = m_bones[i].bone_transform;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4Vector("boneTransforms", bone_transforms);
+}
+/*
+void Mesh::AnimateBI(double m_currentTime)
+{
+    // TODO: Switching between animations can be added!
+
+    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNodeBI(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        bone_transforms[i] = m_bones[i].bone_transform;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4Vector("boneTransforms", bone_transforms);
+}
+*/
+
+void Mesh::AnimateCI(double m_currentTime)
+{
+    // TODO: Switching between animations can be added!
+
+    std::vector<glm::mat4> bone_transforms;                     // Vector to be passed to vertex shader, containing all bone transforms
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        bone_transforms[i] = m_bones[i].bone_transform;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4Vector("boneTransforms", bone_transforms);
+}
+
+void Mesh::AnimateDualQuat(int frame)
+{
+    std::vector<glm::mat4x2> bone_transforms;
+    std::vector<glm::mat4> scale_transforms;
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNode(frame, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+    scale_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones and convert to dual quaternions
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        glm::quat r_quat;
+        glm::vec3 t, s;
+
+        r_quat = glm::quat_cast(m_bones[i].bone_transform);                 // Get rotation quaternion
+        t = glm::vec3(m_bones[i].bone_transform[3]);                        // Get translation from matrix
+
+        glm::quat t_quat = glm::quat(0, t.x, t.y, t.z) * r_quat * 0.5f;     // Convert translation to quaternion
+
+        // Set dual quaternion data (glm is column-major)
+        glm::mat4x2 dual_quat(0.0f);
+        dual_quat[0][0] = r_quat.w;
+        dual_quat[1][0] = r_quat.x;
+        dual_quat[2][0] = r_quat.y;
+        dual_quat[3][0] = r_quat.z;
+
+        dual_quat[0][1] = t_quat.w;
+        dual_quat[1][1] = t_quat.x;
+        dual_quat[2][1] = t_quat.y;
+        dual_quat[3][1] = t_quat.z;
+
+        /*dual_quat[0][0] = r_quat.x;
+        dual_quat[1][0] = r_quat.y;
+        dual_quat[2][0] = r_quat.z;
+        dual_quat[3][0] = r_quat.w;
+
+        dual_quat[0][1] = t_quat.x;
+        dual_quat[1][1] = t_quat.y;
+        dual_quat[2][1] = t_quat.z;
+        dual_quat[3][1] = t_quat.w;*/
+
+        bone_transforms[i] = dual_quat;
+
+        // Set Mat4
+        s.x = glm::length(m_bones[i].bone_transform[0]);
+        s.y = glm::length(m_bones[i].bone_transform[1]);
+        s.z = glm::length(m_bones[i].bone_transform[2]);
+
+        glm::mat4 scale_mat(0.0f);
+        scale_mat[0][0] = s.x;
+        scale_mat[1][1] = s.y;
+        scale_mat[2][2] = s.z;
+        scale_mat[3][3] = 1.0f;
+
+        scale_transforms[i] = scale_mat * m_bones[i].offsetMatrix;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4x2Vector("boneTransforms", bone_transforms);
+    //shader->setMat4Vector("scaleTransforms", scale_transforms);
+}
+
+void Mesh::AnimateLIDualQuat(double m_currentTime)
+{
+    std::vector<glm::mat4x2> bone_transforms;
+    std::vector<glm::mat4> scale_transforms;
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNodeLI(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+    scale_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones and convert to dual quaternions
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        glm::quat r_quat;
+        glm::vec3 t, s;
+
+        r_quat = glm::quat_cast(m_bones[i].bone_transform);                 // Get rotation quaternion
+        t = glm::vec3(m_bones[i].bone_transform[3]);                        // Get translation from matrix
+
+        glm::quat t_quat = glm::quat(0, t.x, t.y, t.z) * r_quat * 0.5f;     // Convert translation to quaternion
+
+        // Set dual quaternion data (glm is column-major)
+        glm::mat4x2 dual_quat(0.0f);
+        dual_quat[0][0] = r_quat.w;
+        dual_quat[1][0] = r_quat.x;
+        dual_quat[2][0] = r_quat.y;
+        dual_quat[3][0] = r_quat.z;
+
+        dual_quat[0][1] = t_quat.w;
+        dual_quat[1][1] = t_quat.x;
+        dual_quat[2][1] = t_quat.y;
+        dual_quat[3][1] = t_quat.z;
+
+        /*dual_quat[0][0] = r_quat.x;
+        dual_quat[1][0] = r_quat.y;
+        dual_quat[2][0] = r_quat.z;
+        dual_quat[3][0] = r_quat.w;
+
+        dual_quat[0][1] = t_quat.x;
+        dual_quat[1][1] = t_quat.y;
+        dual_quat[2][1] = t_quat.z;
+        dual_quat[3][1] = t_quat.w;*/
+
+        bone_transforms[i] = dual_quat;
+
+        // Set Mat4
+        s.x = glm::length(m_bones[i].bone_transform[0]);
+        s.y = glm::length(m_bones[i].bone_transform[1]);
+        s.z = glm::length(m_bones[i].bone_transform[2]);
+
+        glm::mat4 scale_mat(0.0f);
+        scale_mat[0][0] = s.x;
+        scale_mat[1][1] = s.y;
+        scale_mat[2][2] = s.z;
+        scale_mat[3][3] = 1.0f;
+
+        scale_transforms[i] = scale_mat;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4x2Vector("boneTransforms", bone_transforms);
+    //shader->setMat4Vector("scaleTransforms", scale_transforms);
+}
+
+void Mesh::AnimateCIDualQuat(double m_currentTime)
+{
+    std::vector<glm::mat4x2> bone_transforms;
+    std::vector<glm::mat4> scale_transforms;
+
+    glm::mat4 initial_matrix = glm::mat4(1.0f);
+
+    // Traverse nodes from root node
+    TraverseNodeCI(m_currentTime, scene->mRootNode, initial_matrix);
+
+    bone_transforms.resize(m_boneCounter);
+    scale_transforms.resize(m_boneCounter);
+
+    // Traverse updated bones and convert to dual quaternions
+    for (int i = 0; i < m_boneCounter; i++)
+    {
+        glm::quat r_quat;
+        glm::vec3 t, s;
+
+        r_quat = glm::quat_cast(m_bones[i].bone_transform);                 // Get rotation quaternion
+        t = glm::vec3(m_bones[i].bone_transform[3]);                        // Get translation from matrix
+
+        glm::quat t_quat = glm::quat(0, t.x, t.y, t.z) * r_quat * 0.5f;     // Convert translation to quaternion
+
+        // Set dual quaternion data (glm is column-major)
+        glm::mat4x2 dual_quat(0.0f);
+        dual_quat[0][0] = r_quat.w;
+        dual_quat[1][0] = r_quat.x;
+        dual_quat[2][0] = r_quat.y;
+        dual_quat[3][0] = r_quat.z;
+
+        dual_quat[0][1] = t_quat.w;
+        dual_quat[1][1] = t_quat.x;
+        dual_quat[2][1] = t_quat.y;
+        dual_quat[3][1] = t_quat.z;
+
+        /*dual_quat[0][0] = r_quat.x;
+        dual_quat[1][0] = r_quat.y;
+        dual_quat[2][0] = r_quat.z;
+        dual_quat[3][0] = r_quat.w;
+
+        dual_quat[0][1] = t_quat.x;
+        dual_quat[1][1] = t_quat.y;
+        dual_quat[2][1] = t_quat.z;
+        dual_quat[3][1] = t_quat.w;*/
+
+        bone_transforms[i] = dual_quat;
+
+        // Set Mat4
+        s.x = glm::length(m_bones[i].bone_transform[0]);
+        s.y = glm::length(m_bones[i].bone_transform[1]);
+        s.z = glm::length(m_bones[i].bone_transform[2]);
+
+        glm::mat4 scale_mat(0.0f);
+        scale_mat[0][0] = s.x;
+        scale_mat[1][1] = s.y;
+        scale_mat[2][2] = s.z;
+        scale_mat[3][3] = 1.0f;
+
+        scale_transforms[i] = scale_mat * m_bones[i].offsetMatrix;
+    }
+
+    shader->use();
+
+    // Write bone transforms to vertex shader
+    shader->setMat4x2Vector("boneTransforms", bone_transforms);
+    //shader->setMat4Vector("scaleTransforms", scale_transforms);
 }
 
 void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& parent_transform, std::vector<glm::vec3>* boneVertices)
@@ -565,7 +865,180 @@ void Mesh::TraverseNode(const int frame, const aiNode* node, const glm::mat4& pa
     }
 }
 
-Shader Mesh::getShader()
+void Mesh::TraverseNodeLI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
+{
+    std::string node_name(std::string(node->mName.data));
+    glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
+
+    // Get SQT
+    SQT sqt;
+    auto sqt_it = m_animations.back().poseSamples.find(node_name);
+    if (sqt_it != m_animations.back().poseSamples.end())
+    {
+        const std::vector<SQT>& bonePoses = sqt_it->second.bonePoses;
+        const int numFrames = static_cast<int>(bonePoses.size());
+
+        // Check if keyframes exist
+        if (numFrames > 0)
+        {
+            // Look for first keyframe
+            int frame_index = 0;
+            for (int i = 0; i < bonePoses.size() - 1; i++)
+            {
+
+                if (bonePoses[i].time <= m_currentTime && m_currentTime < bonePoses[i + 1].time)
+                    frame_index = i;
+            }
+
+            // Find frames
+            int nextFrameIndex = frame_index + 1;
+
+            const SQT& currentFrameSQT = bonePoses[frame_index];
+            const SQT& nextFrameSQT = bonePoses[nextFrameIndex];
+
+            // Calculate the interpolation factor
+            float t = (m_currentTime - currentFrameSQT.time) / (nextFrameSQT.time - currentFrameSQT.time);
+
+            // Interpolate scale, rotation and translation
+            glm::vec3 scale = currentFrameSQT.scale + t * (nextFrameSQT.scale - currentFrameSQT.scale);
+            glm::quat rotation = glm::normalize(glm::slerp(currentFrameSQT.rotation, nextFrameSQT.rotation, t));                    // SLERP IS THE WAY!
+            glm::vec3 translation = currentFrameSQT.translation + t * (nextFrameSQT.translation - currentFrameSQT.translation);
+
+            // Add them to the matrices
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
+            glm::mat4 rotation_matrix = glm::toMat4(rotation);
+            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
+
+            node_transform = translation_matrix * rotation_matrix * scale_matrix;
+        }
+    }
+
+    // Combine with parent
+    glm::mat4 global_transformation = parent_transform * node_transform;
+
+    // Get Bone
+    auto bone_it = bone_map.find(node_name);
+    if (bone_it != bone_map.end())
+    {
+        m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+    }
+
+    // Recursion to traverse all nodes
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        TraverseNodeLI(m_currentTime, node->mChildren[i], global_transformation);
+    }
+}
+
+void Mesh::TraverseNodeCI(const double m_currentTime, const aiNode* node, const glm::mat4& parent_transform)
+{
+    std::string node_name(std::string(node->mName.data));
+    glm::mat4 node_transform = ConvertMatrixToGLMFormat(node->mTransformation);
+
+    // Get SQT
+    SQT sqt;
+    auto sqt_it = m_animations.back().poseSamples.find(node_name);
+    if (sqt_it != m_animations.back().poseSamples.end())
+    {
+        const std::vector<SQT>& bonePoses = sqt_it->second.bonePoses;
+        const int numFrames = static_cast<int>(bonePoses.size());
+
+        // Check if keyframes exist
+        if (numFrames > 0)
+        {
+            // Look for first keyframe
+            int frame_index = 0;
+            for (int i = 0; i < bonePoses.size() - 1; i++)
+            {
+                if (bonePoses[i].time <= m_currentTime && m_currentTime < bonePoses[i + 1].time)
+                    frame_index = i;
+            }
+
+            // Find frames
+            int prevFrameIndex = std::max(frame_index - 1, 0);
+            int nextFrameIndex = frame_index + 1;
+            int nextNextFrameIndex = std::min(frame_index + 2, numFrames - 1);
+            int nextNextNextFrameIndex = std::min(frame_index + 3, numFrames - 1);
+
+            const SQT& prevFrameSQT = bonePoses[prevFrameIndex];
+            const SQT& currentFrameSQT = bonePoses[frame_index];
+            const SQT& nextFrameSQT = bonePoses[nextFrameIndex];
+            const SQT& nextNextFrameSQT = bonePoses[nextNextFrameIndex];
+            const SQT& nextNextNextFrameSQT = bonePoses[nextNextNextFrameIndex];
+
+
+            // Calculate the interpolation factor
+            float t = static_cast<float>((m_currentTime - currentFrameSQT.time) / (nextFrameSQT.time - currentFrameSQT.time));
+
+            // Perform cubic interpolation for scale, rotation, and translation
+            glm::vec3 scale = cubicInterpolate(
+                currentFrameSQT.scale,
+                nextFrameSQT.scale,
+                nextNextFrameSQT.scale,
+                nextNextNextFrameSQT.scale,
+                t
+            );
+
+            /*glm::quat rotation = glm::normalize(cubicInterpolate(
+                currentFrameSQT.rotation,
+                nextFrameSQT.rotation,
+                nextNextFrameSQT.rotation,
+                nextNextNextFrameSQT.rotation,
+                t
+            ));*/
+            glm::quat rotation = glm::normalize(slerp(
+                currentFrameSQT.rotation,
+                nextFrameSQT.rotation,
+                t
+            ));
+
+            glm::vec3 translation = cubicInterpolate(
+                currentFrameSQT.translation,
+                nextFrameSQT.translation,
+                nextNextFrameSQT.translation,
+                nextNextNextFrameSQT.translation,
+                t
+            );
+
+            // Add them to the matrices
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0f), scale);
+            glm::mat4 rotation_matrix = glm::toMat4(rotation);
+            glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), translation);
+
+            node_transform = translation_matrix * rotation_matrix * scale_matrix;
+        }
+    }
+
+    // Combine with parent
+    glm::mat4 global_transformation = parent_transform * node_transform;
+
+    // Get Bone
+    auto bone_it = bone_map.find(node_name);
+    if (bone_it != bone_map.end())
+    {
+        m_bones[bone_it->second].bone_transform = inverse_transform * global_transformation * m_bones[bone_it->second].offsetMatrix;
+    }
+
+    // Recursion to traverse all nodes
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+        TraverseNodeCI(m_currentTime, node->mChildren[i], global_transformation);
+    }
+}
+
+AnimationClip Mesh::GetAnimation(int index)
+{
+    // Check that index is indeed in list
+    if (index > m_animations.size())
+    {
+        std::cout << "ERROR::Animation not found in animation list of mesh!" << std::endl;
+        return m_animations[0];
+    }
+
+    return m_animations[index];
+}
+
+Shader* Mesh::getShader()
 {
     return shader;
 }

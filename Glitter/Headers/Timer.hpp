@@ -5,7 +5,7 @@
 /// </summary>
 struct TimeData
 {
-	float DeltaTime;
+	double DeltaTime;
 	float FPS;
 };
 
@@ -35,7 +35,7 @@ public:
 	}
 
 private:
-	float m_prevTime;
-	float m_currentTime;
+	double m_prevTime;
+	double m_currentTime;
 	TimeData m_timeData;
 };

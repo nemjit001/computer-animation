@@ -6,6 +6,8 @@
 #include "Timer.hpp"
 #include "AssetLoader.hpp"
 #include "GUI.hpp"
+#include <Skybox.hpp>
+#include <AnimationPlayer.hpp>
 #include "Application.hpp"
 
 // System Headers
@@ -46,6 +48,26 @@ static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
+
+// Create Camera Object
+Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+// Animation Player
+AnimationPlayer anim_player(0, nullptr);
+
+// Input Tracking Globals
+bool spacebar_down = false;
+bool p_down = false;
+bool wireframe_mode = false;                                // Wireframe Render Flag
+bool show_bones_flag = false;                               // NOTHING YET!
+bool show_skybox = true;                                    // Render Skybox Flag
+bool dual_quat_skinning_flag = false;                       // Whether to perform skinning using DQS or Linear
+bool cubic_interpolation_flag = false;                      // Whether to run cubic interpolation instead of linear
+float anim_speed = 1.0f;                                    // Speed factor for the animation
+unsigned int mesh_index = 2;                                // Current Mesh
+const unsigned int num_meshes = 5;                          // Total Number of Meshes
+unsigned int animation_index = 0;
+
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -112,6 +134,41 @@ int main(int argc, char* argv[])
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
         .link();
 
+    // create and link dual quaternion (without scale) shader
+    Shader dqShader = Shader();
+    dqShader.init();
+
+    dqShader
+        .registerShader("Shaders/bone_dq_no_scale_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
+    // create and link dual quaternion (with scale) shader
+    Shader dqScaleShader = Shader();
+    dqScaleShader.init();
+
+    dqScaleShader
+        .registerShader("Shaders/bone_dq_scale_shader.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
+        .link();
+
+    // create and link skybox shader
+    Shader skyboxShader = Shader();
+    skyboxShader.init();
+
+    skyboxShader
+        .registerShader("Shaders/skybox.vert", GL_VERTEX_SHADER)
+        .registerShader("Shaders/skybox.frag", GL_FRAGMENT_SHADER)
+        .link();
+
+    defaultShader.use();
+
+    // Initialize our application and call its init function
+    Application app = Application();
+    app.init();
+
+    // Create Skybox
+    Skybox skybox("Assets/Yokohama3/", skyboxShader);
     Mesh::skeletonShader = Shader();
     Mesh::skeletonShader.init();
     
@@ -129,6 +186,8 @@ int main(int argc, char* argv[])
     // Initialize our GUI
     GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer, assetLoader);
     gui.Init();
+
+    anim_player = AnimationPlayer(0, meshes[mesh_index]);
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
@@ -211,6 +270,10 @@ int main(int argc, char* argv[])
 
     defaultShader.cleanup();
     textureShader.cleanup();
+    boneShader.cleanup();
+    dqShader.cleanup();
+    skyboxShader.cleanup();
+
     Mesh::skeletonShader.cleanup();
 
     glfwTerminate();
@@ -235,42 +298,48 @@ void processKeyboardInput(GLFWwindow* window)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-        spacebar_down = false;
-    }
-
-    if (g_renderData.active_asset)
+    // Start/Pause Animation
+    if (p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
     {
-        Mesh* pActiveMesh = g_renderData.active_asset->m_mesh.get();
+        anim_player.is_playing = !anim_player.is_playing;
 
-        // Scrolling through animation
-        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && g_renderData.animation_frame < pActiveMesh->GetAnimationFrameNum() - 1)
-            g_renderData.animation_frame++;
-        else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && g_renderData.animation_frame > 0)
-            g_renderData.animation_frame--;
+        p_down = false;
     }
+
+    // Scrolling through animation
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
+        animation_index++;
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
+        animation_index--;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
+        animation_index++;
+    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
+        animation_index--;
 
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
 
+    if (!p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+        p_down = true;
+
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
     if (g_camera.arcball_mode)
         return;
-
-    TimeData time = g_timer.GetData();
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         g_camera.MoveCamera(FWD, time.DeltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    TimeData time = g_timer.GetData();
         g_camera.MoveCamera(AFT, time.DeltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         g_camera.MoveCamera(LEFT, time.DeltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         g_camera.MoveCamera(RIGHT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         g_camera.MoveCamera(UPWARD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         g_camera.MoveCamera(DOWNWARD, time.DeltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        main_camera.MoveCamera(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        main_camera.MoveCamera(RIGHT, deltaTime);
 }
 
 void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
@@ -287,24 +356,48 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
 
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos;
-
-    lastX = xpos;
-    lastY = ypos;
-
     TimeData time = g_timer.GetData();
     if (g_camera.arcball_mode)
         g_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
+    lastY = ypos;
+
+    if (main_camera.arcball_mode)
+        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
     else
         g_camera.RotateCamera(xoffset, yoffset);
-}
+    TimeData time = g_timer.GetData();
+    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    TimeData time = g_timer.GetData();
-    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
+    main_camera.MoveArcballCamera(y_offset, deltaTime);
 }
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
+
+void guiButtonCallback(GUI_BUTTON button)
 {
-    glViewport(0, 0, width, height);
+    if (button == MODEL_SWITCH)
+    {
+        mesh_index++;
+        animation_index = 0;            // Reset animation frame index
+        if (mesh_index == num_meshes)
+            mesh_index = 0;
+
+        // Update AnimationPlayer
+        if (meshes[mesh_index]->HasAnimations())
+            anim_player.SetValues(0, meshes[mesh_index]);
+    }
+
+    else if (button == CAMERA_MODE_SWITCH)
+    {
+        main_camera.arcball_mode = !main_camera.arcball_mode;
+
+        if (main_camera.arcball_mode)
+            camera_mode_string = "Camera Type: Arcball Camera";
+        else
+            camera_mode_string = "Camera Type: Normal Camera";
+    }
+}        else
+            camera_mode_string = "Camera Type: Normal Camera";
+    }
 }

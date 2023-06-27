@@ -26,6 +26,7 @@ struct BoneInfo
 	int id;										// Bone ID index
 	glm::mat4 offsetMatrix;						// Offset matrix for bone space
 	glm::mat4 bone_transform = glm::mat4(0.0f);	// Final bone tranformation matrix
+	glm::mat4x2 dual_quat = glm::mat4x2(0.0f);	// Final bone dual quaternion
 };
 
 /// <summary>
