@@ -14,6 +14,7 @@ layout(location = 6) in vec4 boneWeights;
 const int MAX_BONES = 120;                   // We need a maximum number, and 120 should be safe for the vast majority of rigs
 
 out vec3 Normal;
+out vec3 Tangent;
 out vec3 WorldPos;
 out vec2 TexCoords;
 out vec3 TestColor;
@@ -100,9 +101,12 @@ void main()
     vec3 new_normal = qt * vec4(normal, 0.0);
 
     // TODO: Tangent and Bitangent will also be affected by finalBoneTransform!
+    vec3 new_tangent = qt * vec4(tangent, 0.0);
 
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * new_position;
+
     Normal = mat3(transpose(inverse(modelMatrix))) * new_normal;    // Presumably correct
+    Tangent = mat3(transpose(inverse(modelMatrix))) * new_tangent;
     WorldPos = vec3(modelMatrix * new_position);                // Presumably correct
     TexCoords = texCoords;                                      // Just passed to the Fragment Shader
 }
