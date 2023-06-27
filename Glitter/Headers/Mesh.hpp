@@ -61,31 +61,31 @@ public:
 	/// Evaluates and animates the current frame using linear interpolation on the current time
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateLI(double m_currentTime);
+	void AnimateLI(double m_currentTime, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Evaluates and animates the current frame using bicubic interpolation on the current time
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateCI(double m_currentTime);
+	void AnimateCI(double m_currentTime, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Evaluates and animates the selected keyframe of the animation, using DQS
 	/// </summary>
 	/// <param name="frame">: the keyframe to be animated</param>
-	void AnimateDualQuat(int frame);
+	void AnimateDualQuat(int frame, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Evaluates and animates the current frame using linear interpolation on the current time, using DQS
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateLIDualQuat(double m_currentTime);
+	void AnimateLIDualQuat(double m_currentTime, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Evaluates and animates the current frame using bicubic interpolation on the current time
 	/// </summary>
 	/// <param name="m_currentTime">: the current animation time</param>
-	void AnimateCIDualQuat(double m_currentTime);
+	void AnimateCIDualQuat(double m_currentTime, std::vector<glm::vec3>* boneVertices);
 
 	/// <summary>
 	/// Traverses nodes (aiNode) in tree recursively, to calculate final transformation matrices

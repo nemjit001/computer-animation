@@ -25,9 +25,6 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos);
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset);
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-// Input Tracking Globals
-bool spacebar_down = false;
-
 // Create Render Settings Globals
 static SceneSettings g_renderData =
 {
@@ -37,20 +34,23 @@ static SceneSettings g_renderData =
     0.0f,                   // default metallic color
     0.0f,                   // default roughness
     false,                  // default wireframe mode
-    false,                  // default bone visibility,
-    nullptr,                // no active asset at first,
+    false,                  // default bone visibility
+    true,                   // default skybox rendering
+    false,                  // default dual_quaternion skinning
+    false,                  // default cubic interpolation flag
+    1.0f,                   // default animation speed
+    nullptr,                // no active asset at first
     0                       // 0th frame is default for animation
 };
+
 // Create Camera Object
 static Camera g_camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
 // Create Timer object
 static Timer g_timer;
 
 // First Mouse Movement Hack
 bool first_mouse_flag = true;
-
-// Create Camera Object
-Camera main_camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 // Animation Player
 AnimationPlayer anim_player(0, nullptr);
@@ -58,16 +58,6 @@ AnimationPlayer anim_player(0, nullptr);
 // Input Tracking Globals
 bool spacebar_down = false;
 bool p_down = false;
-bool wireframe_mode = false;                                // Wireframe Render Flag
-bool show_bones_flag = false;                               // NOTHING YET!
-bool show_skybox = true;                                    // Render Skybox Flag
-bool dual_quat_skinning_flag = false;                       // Whether to perform skinning using DQS or Linear
-bool cubic_interpolation_flag = false;                      // Whether to run cubic interpolation instead of linear
-float anim_speed = 1.0f;                                    // Speed factor for the animation
-unsigned int mesh_index = 2;                                // Current Mesh
-const unsigned int num_meshes = 5;                          // Total Number of Meshes
-unsigned int animation_index = 0;
-
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -178,20 +168,27 @@ int main(int argc, char* argv[])
         .link();
     
 
-    // Initialize our dynamic asset loader and load obj and fbx files from the asset folder
+    // Initialize our dynamic asset loader and load fbx files from the asset folder
     AssetLoader assetLoader = AssetLoader();
     assetLoader.Load("Assets/*.fbx", boneShader);
-    assetLoader.Load("Assets/*.obj", defaultShader);
+
+    // Create Floor Mesh
+    Mesh floor("Assets/ca_floor.fbx", &textureShader);
 
     // Initialize our GUI
     GUI gui = GUI(mWindow, g_camera, g_renderData, g_timer, assetLoader);
     gui.Init();
 
-    anim_player = AnimationPlayer(0, meshes[mesh_index]);
+    // Set Animation Player
+    //anim_player = AnimationPlayer(0, g_renderData.active_asset->m_mesh.get());
+
+    // Previously selected mesh
+    Mesh* previous_mesh = nullptr;
 
     // Rendering Loop
     while (glfwWindowShouldClose(mWindow) == false)
     {
+        // Update Timer
         g_timer.Tick();
 
         // Process Keyboard Input
@@ -215,17 +212,61 @@ int main(int argc, char* argv[])
         GLuint texture_normalID = 1;
         GLuint texture_specularID = 2;
       
+        // Render floor
+        floor.Render(
+            view,
+            glm::mat4(1.0f),
+            projection,
+            g_camera.position,
+            glm::vec3(g_renderData.light_position[0], g_renderData.light_position[1], g_renderData.light_position[2]),
+            glm::vec3(g_renderData.base_color[0], g_renderData.base_color[1], g_renderData.base_color[2]),
+            glm::vec3(g_renderData.light_color[0], g_renderData.light_color[1], g_renderData.light_color[2]),
+            g_renderData.manual_metallic,
+            g_renderData.manual_roughness,
+            texture_diffuseID,
+            texture_normalID,
+            texture_specularID
+        );
+
         // Render Mesh
         if (g_renderData.active_asset)
         {
             Mesh* pActiveMesh = g_renderData.active_asset->m_mesh.get();
+
+            // Check if mesh selection has changed
+            if (pActiveMesh != previous_mesh)
+            {
+                // Update AnimationPlayer
+                if (pActiveMesh->HasAnimations())
+                    anim_player.SetValues(0, pActiveMesh);
+
+                previous_mesh = pActiveMesh;
+            }
 
             // Check whether mesh has animation and evaluate
             if (pActiveMesh->HasAnimations())
             {
                 std::vector<glm::vec3> boneVertices = std::vector<glm::vec3>();
 
-                pActiveMesh->Animate(g_renderData.animation_frame, &boneVertices);
+                // Check type of skinning
+                if (g_renderData.dual_quat_skinning_flag)
+                {
+                    pActiveMesh->ChangeShader(&dqShader);
+                    if (g_renderData.cubic_interpolation_flag)
+                        pActiveMesh->AnimateCIDualQuat(anim_player.UpdateTime(g_timer.GetData().DeltaTime, g_renderData.anim_speed), &boneVertices);
+                    else
+                        pActiveMesh->AnimateLIDualQuat(anim_player.UpdateTime(g_timer.GetData().DeltaTime, g_renderData.anim_speed), &boneVertices);
+                }
+                else
+                {
+                    pActiveMesh->ChangeShader(&boneShader);
+                    if (g_renderData.cubic_interpolation_flag)
+                        pActiveMesh->AnimateCI(anim_player.UpdateTime(g_timer.GetData().DeltaTime, g_renderData.anim_speed), &boneVertices);
+                    else
+                        pActiveMesh->AnimateLI(anim_player.UpdateTime(g_timer.GetData().DeltaTime, g_renderData.anim_speed), &boneVertices);
+                }
+
+                //pActiveMesh->Animate(g_renderData.animation_frame, &boneVertices);
 
                 Mesh::UpdateSkeletonVertices(boneVertices);
             }
@@ -246,16 +287,23 @@ int main(int argc, char* argv[])
             );
 
             if (gui.ShouldRenderBones()) {
-                // Clear the depth buffer so that the skeleton rendering is always on top
-                glClear(GL_DEPTH_BUFFER_BIT);
+                // Disable depth testing so that the skeleton rendering is always on top
+                glDisable(GL_DEPTH_TEST);
 
                 Mesh::RenderBones(
                     view,
                     glm::mat4(1.0f),
                     projection
                 );
+
+                // Re-enable depth testing
+                glEnable(GL_DEPTH_TEST);
             }
         }
+
+        // Render Skybox
+        if (g_renderData.show_skybox)
+            skybox.Render(view, projection);
         
         // Render GUI
         gui.Render();
@@ -292,12 +340,16 @@ void processKeyboardInput(GLFWwindow* window)
     if (spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
     {
         g_camera.enabled = !g_camera.enabled;
-        
+
         // Enable/Disable Cursor
         if (g_camera.enabled)
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         else
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+        spacebar_down = false;
+    }
+
     // Start/Pause Animation
     if (p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_RELEASE)
     {
@@ -307,14 +359,14 @@ void processKeyboardInput(GLFWwindow* window)
     }
 
     // Scrolling through animation
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
-        animation_index++;
-    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
-        animation_index--;
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && animation_index < meshes[mesh_index]->GetAnimationFrameNum() - 1)
-        animation_index++;
-    else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && animation_index > 0)
-        animation_index--;
+    if (g_renderData.active_asset)
+    {
+        Mesh* pActiveMesh = g_renderData.active_asset->m_mesh.get();
+        if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS && g_renderData.animation_frame < pActiveMesh->GetAnimationFrameNum() - 1)
+            g_renderData.animation_frame++;
+        else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS && g_renderData.animation_frame > 0)
+            g_renderData.animation_frame--;
+    }
 
     if (!spacebar_down && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
         spacebar_down = true;
@@ -325,24 +377,24 @@ void processKeyboardInput(GLFWwindow* window)
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
     if (g_camera.arcball_mode)
         return;
-        g_camera.MoveCamera(FWD, time.DeltaTime);
+
     TimeData time = g_timer.GetData();
-        g_camera.MoveCamera(AFT, time.DeltaTime);
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        g_camera.MoveCamera(LEFT, time.DeltaTime);
+        g_camera.MoveCamera(FWD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        g_camera.MoveCamera(RIGHT, time.DeltaTime);
+        g_camera.MoveCamera(AFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         g_camera.MoveCamera(UPWARD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
         g_camera.MoveCamera(DOWNWARD, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        main_camera.MoveCamera(LEFT, deltaTime);
+        g_camera.MoveCamera(LEFT, time.DeltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        main_camera.MoveCamera(RIGHT, deltaTime);
+        g_camera.MoveCamera(RIGHT, time.DeltaTime);
 }
 
-void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
+void mouseMovementCallback(GLFWwindow * window, double x_pos, double y_pos)
 {
     float xpos = static_cast<float>(x_pos);
     float ypos = static_cast<float>(y_pos);
@@ -356,48 +408,24 @@ void mouseMovementCallback(GLFWwindow* window, double x_pos, double y_pos)
 
     float xoffset = xpos - lastX;
     float yoffset = lastY - ypos;
+
+    lastX = xpos;
+    lastY = ypos;
+
     TimeData time = g_timer.GetData();
     if (g_camera.arcball_mode)
         g_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, time.DeltaTime);
-    lastY = ypos;
-
-    if (main_camera.arcball_mode)
-        main_camera.RotateArcballCamera(xoffset, yoffset, mWidth, mHeight, deltaTime);
     else
         g_camera.RotateCamera(xoffset, yoffset);
-    TimeData time = g_timer.GetData();
-    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
+}
 
 void mouseScrollCallback(GLFWwindow* window, double x_offset, double y_offset)
 {
-    main_camera.MoveArcballCamera(y_offset, deltaTime);
+    TimeData time = g_timer.GetData();
+    g_camera.MoveArcballCamera(y_offset, time.DeltaTime);
 }
 
-
-void guiButtonCallback(GUI_BUTTON button)
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
-    if (button == MODEL_SWITCH)
-    {
-        mesh_index++;
-        animation_index = 0;            // Reset animation frame index
-        if (mesh_index == num_meshes)
-            mesh_index = 0;
-
-        // Update AnimationPlayer
-        if (meshes[mesh_index]->HasAnimations())
-            anim_player.SetValues(0, meshes[mesh_index]);
-    }
-
-    else if (button == CAMERA_MODE_SWITCH)
-    {
-        main_camera.arcball_mode = !main_camera.arcball_mode;
-
-        if (main_camera.arcball_mode)
-            camera_mode_string = "Camera Type: Arcball Camera";
-        else
-            camera_mode_string = "Camera Type: Normal Camera";
-    }
-}        else
-            camera_mode_string = "Camera Type: Normal Camera";
-    }
+    glViewport(0, 0, width, height);
 }

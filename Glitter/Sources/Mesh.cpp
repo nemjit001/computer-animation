@@ -23,8 +23,8 @@ unsigned int Mesh::m_skeletonVAO;
 unsigned int Mesh::m_skeletonVBO;
 
 Mesh::Mesh(std::string const& filename, Shader* shader)
-    :
-    Mesh()
+    //:
+    //Mesh()
 {
     this->shader = shader;
 
@@ -153,18 +153,18 @@ void Mesh::Render(glm::mat4 view, glm::mat4 model, glm::mat4 projection, glm::ve
     shader->use();
 
     // Pass uniforms
-    shader.setMat4("viewMatrix", view);
-    shader.setMat4("modelMatrix", model);
-    shader.setMat4("projectionMatrix", projection);
-    shader.setVec3("CamPos", cam_pos);
-    shader.setVec3("LightPosition", light_pos);
-    shader.setVec3("BaseColor", base_color);
-    shader.setVec3("ManualLightColor", manual_light_color);
-    shader.setFloat("ManualMetallic", manual_metallic);
-    shader.setFloat("ManualRoughness", manual_roughness);
-    shader.setInt("DiffuseTexture", 0);
-    shader.setInt("NormalTexture", 1);
-    shader.setInt("SpecularTexture", 2);
+    shader->setMat4("viewMatrix", view);
+    shader->setMat4("modelMatrix", model);
+    shader->setMat4("projectionMatrix", projection);
+    shader->setVec3("CamPos", cam_pos);
+    shader->setVec3("LightPosition", light_pos);
+    shader->setVec3("BaseColor", base_color);
+    shader->setVec3("ManualLightColor", manual_light_color);
+    shader->setFloat("ManualMetallic", manual_metallic);
+    shader->setFloat("ManualRoughness", manual_roughness);
+    shader->setInt("DiffuseTexture", 0);
+    shader->setInt("NormalTexture", 1);
+    shader->setInt("SpecularTexture", 2);
 
 
     for (auto& mesh : m_subMeshes)
@@ -533,7 +533,7 @@ void Mesh::Animate(int frame, std::vector<glm::vec3>* boneVertices)
     shader->setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::AnimateLI(double m_currentTime)
+void Mesh::AnimateLI(double m_currentTime, std::vector<glm::vec3>* boneVertices)
 {
     // TODO: Switching between animations can be added!
 
@@ -558,7 +558,7 @@ void Mesh::AnimateLI(double m_currentTime)
     shader->setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::AnimateCI(double m_currentTime)
+void Mesh::AnimateCI(double m_currentTime, std::vector<glm::vec3>* boneVertices)
 {
     // TODO: Switching between animations can be added!
 
@@ -583,7 +583,7 @@ void Mesh::AnimateCI(double m_currentTime)
     shader->setMat4Vector("boneTransforms", bone_transforms);
 }
 
-void Mesh::AnimateDualQuat(int frame)
+void Mesh::AnimateDualQuat(int frame, std::vector<glm::vec3>* boneVertices)
 {
     std::vector<glm::mat4x2> bone_transforms;
     std::vector<glm::mat4> scale_transforms;
@@ -652,7 +652,7 @@ void Mesh::AnimateDualQuat(int frame)
     //shader->setMat4Vector("scaleTransforms", scale_transforms);
 }
 
-void Mesh::AnimateLIDualQuat(double m_currentTime)
+void Mesh::AnimateLIDualQuat(double m_currentTime, std::vector<glm::vec3>* boneVertices)
 {
     std::vector<glm::mat4x2> bone_transforms;
     std::vector<glm::mat4> scale_transforms;
@@ -721,7 +721,7 @@ void Mesh::AnimateLIDualQuat(double m_currentTime)
     //shader->setMat4Vector("scaleTransforms", scale_transforms);
 }
 
-void Mesh::AnimateCIDualQuat(double m_currentTime)
+void Mesh::AnimateCIDualQuat(double m_currentTime, std::vector<glm::vec3>* boneVertices)
 {
     std::vector<glm::mat4x2> bone_transforms;
     std::vector<glm::mat4> scale_transforms;

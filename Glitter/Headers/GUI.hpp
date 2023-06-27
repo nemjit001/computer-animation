@@ -33,6 +33,10 @@ struct SceneSettings
     float manual_roughness;
     bool wireframe_mode;
     bool show_bones_flag;
+    bool show_skybox;
+    bool dual_quat_skinning_flag;
+    bool cubic_interpolation_flag;
+    float anim_speed;
     Asset* active_asset;
     int animation_frame;
 };

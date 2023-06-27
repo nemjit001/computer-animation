@@ -18,7 +18,7 @@ AssetLoader::AssetLoader()
     // 
 }
 
-void AssetLoader::Load(std::string const& expr, Shader const& shader)
+void AssetLoader::Load(std::string const& expr, Shader& shader)
 {
 #ifdef _WIN32
     WIN32_FIND_DATA fileFindData = {};
@@ -32,9 +32,13 @@ void AssetLoader::Load(std::string const& expr, Shader const& shader)
         std::string dir = expr.substr(0, expr.find_last_of('/'));
         std::string path = dir + "/" + fileFindData.cFileName;
 
+        // Skip floor
+        if (fileFindData.cFileName == "ca_floor.fbx")
+            continue;
+
         Asset* pAsset = new Asset{
             std::string(fileFindData.cFileName),
-            std::unique_ptr<Mesh>(new Mesh(path, shader))
+            std::unique_ptr<Mesh>(new Mesh(path, &shader))
         };
 
         m_assets.push_back(
