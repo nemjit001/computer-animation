@@ -60,7 +60,7 @@ void AssetLoader::Load(std::string const& expr, Shader& shader)
     {
         Asset* pAsset = new Asset{
             std::string(globResult.gl_pathv[i]),
-            std::unique_ptr<Mesh>(new Mesh(globResult.gl_pathv[i], shader))
+            std::unique_ptr<Mesh>(new Mesh(globResult.gl_pathv[i], &shader))
         };
 
         m_assets.push_back(
