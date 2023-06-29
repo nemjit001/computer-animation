@@ -58,6 +58,7 @@ AnimationPlayer anim_player(0, nullptr);
 // Input Tracking Globals
 bool spacebar_down = false;
 bool p_down = false;
+bool r_down = false;
 
 // Track Previous Camera Parameters
 float lastX = (float)mWidth / 2.0;
@@ -217,7 +218,7 @@ int main(int argc, char* argv[])
             skybox.Render(view, projection);
       
         // Render floor
-        floor.Render(
+        /*floor.Render(
             view,
             glm::mat4(1.0f),
             projection,
@@ -230,7 +231,7 @@ int main(int argc, char* argv[])
             texture_diffuseID,
             texture_normalID,
             texture_specularID
-        );
+        );*/
 
         // Render Mesh
         if (g_renderData.active_asset)
@@ -358,6 +359,14 @@ void processKeyboardInput(GLFWwindow* window)
         p_down = false;
     }
 
+    // Reset Animation
+    if (r_down && glfwGetKey(window, GLFW_KEY_R) == GLFW_RELEASE)
+    {
+        anim_player.ResetTime();
+
+        r_down = false;
+    }
+
     // Scrolling through animation
     if (g_renderData.active_asset)
     {
@@ -373,6 +382,9 @@ void processKeyboardInput(GLFWwindow* window)
 
     if (!p_down && glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
         p_down = true;
+
+    if (!r_down && glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        r_down = true;
 
     // Ignore Keyboard Inputs for Camera Movement if arcball_mode == true
     if (g_camera.arcball_mode)

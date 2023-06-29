@@ -46,6 +46,7 @@ void GUI::Render()
     ImGui::Text("Animation Frame: %u", m_sceneSettings.animation_frame);
     ImGui::Text("Use SPACEBAR to enable/disable cursor!");
     ImGui::Text("Use P to start/pause the animation player!");
+    ImGui::Text("Use R to reset the animation player!");
     ImGui::SliderFloat("Animation speed", &m_sceneSettings.anim_speed, 0.1f, 2.0f);
 
     if (ImGui::BeginCombo("Models", label.c_str()))
