@@ -66,6 +66,9 @@ Shader& Shader::link()
 
     glLinkProgram(m_programId);
     glGetProgramiv(m_programId, GL_LINK_STATUS, &success);
+    GLint size = 0;
+    GLchar ErrorLog[512] = { 0 };
+    glGetProgramInfoLog(m_programId, 512, &size, ErrorLog);
 
     if (success == GL_FALSE)
     {

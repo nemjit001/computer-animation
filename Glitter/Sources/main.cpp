@@ -138,10 +138,10 @@ int main(int argc, char* argv[])
     Shader dqScaleShader = Shader();
     dqScaleShader.init();
 
-    dqScaleShader
+    /*dqScaleShader
         .registerShader("Shaders/bone_dq_scale_shader.vert", GL_VERTEX_SHADER)
         .registerShader("Shaders/lighting_shader.frag", GL_FRAGMENT_SHADER)
-        .link();
+        .link();*/
 
     // create and link skybox shader
     Shader skyboxShader = Shader();
@@ -218,7 +218,7 @@ int main(int argc, char* argv[])
             skybox.Render(view, projection);
       
         // Render floor
-        /*floor.Render(
+        floor.Render(
             view,
             glm::mat4(1.0f),
             projection,
@@ -231,7 +231,7 @@ int main(int argc, char* argv[])
             texture_diffuseID,
             texture_normalID,
             texture_specularID
-        );*/
+        );
 
         // Render Mesh
         if (g_renderData.active_asset)

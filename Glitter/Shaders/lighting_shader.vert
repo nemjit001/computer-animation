@@ -7,6 +7,7 @@ layout(location = 3) in vec3 tangent;
 
 out vec3 FragPos;
 out vec3 Normal;
+out vec3 WorldPos;
 out vec2 TexCoords;
 out vec3 Tangent;
 
@@ -20,5 +21,6 @@ void main()
     FragPos = vec3(modelMatrix * vec4(position, 1.0));
     Normal = mat3(transpose(inverse(modelMatrix))) * normal;
     Tangent = mat3(transpose(inverse(modelMatrix))) * tangent;
+    WorldPos = vec3(modelMatrix);
     TexCoords = texCoords;
 }
