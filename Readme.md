@@ -7,6 +7,8 @@ It is part of the Game & Media Technology curriculum.
 
 To use BAMF, first build your own binaries (ensure release mode to not wait an eternity for assets to load).
 
+Note: For old versions of CMake, you may have to set the Startup Project to BAMF manually, as well as set the Debugging->Working Directory to "..\Glitter".
+
 After creating your binaries, run BAMF in a folder where an "Assets" directory is available, with fbx models inside. These models will automatically be loaded into BAMF.
 
 Animations will play by default in BAMF. To start and stop playback press "P".
